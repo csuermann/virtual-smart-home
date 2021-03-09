@@ -1,0 +1,20 @@
+{
+  "directive": {
+    "header": {
+      "messageId": "abc-123-def-456",
+      "correlationToken": "abcdef-123456",
+      "namespace": "Alexa",
+      "name": "ReportState",
+      "payloadVersion": "3"
+    },
+    "endpoint": {
+      "endpointId": "appliance-001",
+      "cookie": {},
+      "scope": {
+        "type": "BearerToken",
+        "token": "access-token-from-skill"
+      }
+    },
+    "payload": {}
+  }
+}

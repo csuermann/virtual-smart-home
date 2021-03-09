@@ -1,0 +1,101 @@
+org: csuermann
+app: virtual-smart-home
+service:
+  name: virtual-smart-home
+
+plugins:
+  - serverless-plugin-select
+  - serverless-webpack
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: eu-west-1 #eu-west-1, us-east-1, us-west-2
+  stage: dev
+
+  environment:
+    VSH_IOT_REGION: 'eu-west-1'
+    ALEXA_CLIENT_ID:
+      ${ssm:/virtual-smart-home/${self:custom.myStage}/ALEXA_CLIENT_ID,
+      'amzn1.application-oa2-client.1ee6...'}
+      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_ID" --value "amzn1.application-oa2-client.XXXXX" --type String --overwrite --region eu-west-1
+      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_ID" --value "amzn1.application-oa2-client.XXXXX" --type String --overwrite --region us-east-1
+      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_ID" --value "amzn1.application-oa2-client.XXXXX" --type String --overwrite --region us-west-2
+    ALEXA_CLIENT_SECRET:
+      ${ssm:/virtual-smart-home/${self:custom.myStage}/ALEXA_CLIENT_SECRET~true,
+      '8352892545675...'}
+      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_SECRET" --value "XXXXX" --type SecureString --overwrite --region eu-west-1
+      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_SECRET" --value "XXXXX" --type SecureString --overwrite --region us-east-1
+      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_SECRET" --value "XXXXX" --type SecureString --overwrite --region us-west-2
+
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 'iot:publish'
+      Resource: ['*']
+    - Effect: 'Allow'
+      Action:
+        - 'dynamodb:*'
+      Resource: ['arn:aws:dynamodb:eu-west-1:146271617960:table/vsh_*']
+    - Effect: 'Allow'
+      Action:
+        - 'cloudwatch:PutMetricData'
+      Resource: ['*']
+
+custom:
+  myStage: ${opt:stage, self:provider.stage}
+  myRegion: ${opt:region, self:provider.region}
+
+functions:
+  skill:
+    regions:
+      - eu-west-1
+      - us-east-1
+      - us-west-2
+    handler: handler.alexa
+    timeout: 10
+    events:
+      - alexaSmartHome: amzn1.ask.skill.9dc935df-231a-47f2-bff9-9704683cf896
+
+  backchannel:
+    regions:
+      - eu-west-1
+    handler: handler.backchannel
+
+  cleanup:
+    regions:
+      - eu-west-1
+    handler: cleanup.cleanup
+    timeout: 300
+    events:
+      - schedule: cron(0 3 * * ? *)
+
+  metrics:
+    regions:
+      - eu-west-1
+    handler: metrics.metrics
+    timeout: 15
+    events:
+      - schedule: cron(0/15 * * * ? *)
+
+  provision:
+    regions:
+      - eu-west-1
+    handler: provision.provision
+    events:
+      - http:
+          path: provision
+          method: post
+          cors: true
+      - http:
+          path: devices
+          method: get
+          cors: true
+      - http:
+          path: device
+          method: delete
+          cors: true
+      - http:
+          path: check_version
+          method: get
+          cors: true

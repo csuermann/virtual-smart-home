@@ -1,0 +1,25 @@
+{
+  "directive": {
+    "header": {
+      "namespace": "Alexa.Authorization",
+      "name": "AcceptGrant",
+      "messageId": "e6e4ef2f-97d4-4fef-be02-c47f7aa2118c",
+      "payloadVersion": "3"
+    },
+    "payload": {
+      "grant": {
+        "type": "OAuth2.AuthorizationCode",
+        "code": "RHYTsgYOyexcwkwHmKM"
+      },
+      "grantee": {
+        "type": "BearerToken",
+        "token": "Atza|IwEBIIKZIrWrtGvVv07LwCuTvHTu_A0drVms_mR3_Znb6jOTjZtAGNzzJNbrHtvAjGDyWJdjkmARP665mauJnsE2acGXqsNk0eIa366ygxTtMtF6QcwbgSI7b-7uta1iI4lwLbG1mhhew2hUDoA76_M-TaAYveRA_QBNR4nxVU2TjqNUrUb_Mq0DXsPBm6J94lq01kKrMnt336SzUwdIF3n6ZcmO7BDR-oVq-_7HD3jVKhLJiUZ7JfUaS1ROcvpf4F_EMl9I0gjD3_6kGMQ1aRZVDzus9rMKTsUnwpZj_PpFQIuVRebB51c7aIDcIj_N-ZEScmTZu0-JKd-LtdDl0PO4xbz7aLMa2bMJcKl-zJcPnN61LroCxGHt1RTkQkYZGW-QwbUr3qVM8FQlMAutCx2Ar95Uqwsw"
+      }
+    }
+  },
+  "profile": {
+    "user_id": "amzn1.account.AFWAFGLDJIXYGIL4XXXXX",
+    "name": "John Doe",
+    "email": "john.doe@gmail.com"
+  }
+}

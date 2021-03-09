@@ -1,0 +1,98 @@
+{
+  "event": {
+    "header": {
+      "namespace": "Alexa.Discovery",
+      "name": "Discover.Response",
+      "payloadVersion": "3",
+      "messageId": "<message id>"
+    },
+    "payload": {
+      "endpoints": [
+        {
+          "endpointId": "<unique ID of the endpoint>",
+          "manufacturerName": "Lius Inc",
+          "description": "A virtual device",
+          "friendlyName": "Living Room Light",
+          "additionalAttributes": {
+            "manufacturer": "Lius Inc",
+            "model": "NodeRedAlexaBridge",
+            "serialNumber": "0000001",
+            "firmwareVersion": "1.0.0",
+            "softwareVersion": "1.0.0",
+            "customIdentifier": "0000001"
+          },
+          "displayCategories": ["LIGHT"],
+          "capabilities": [
+            {
+              "type": "AlexaInterface",
+              "interface": "Alexa.PowerController",
+              "version": "3",
+              "properties": {
+                "supported": [
+                  {
+                    "name": "powerState"
+                  }
+                ],
+                "proactivelyReported": true,
+                "retrievable": true
+              }
+            },
+            {
+              "type": "AlexaInterface",
+              "interface": "Alexa.BrightnessController",
+              "version": "3",
+              "properties": {
+                "supported": [
+                  {
+                    "name": "brightness"
+                  }
+                ],
+                "proactivelyReported": true,
+                "retrievable": true
+              }
+            },
+            {
+              "type": "AlexaInterface",
+              "interface": "Alexa.EndpointHealth",
+              "version": "3",
+              "properties": {
+                "supported": [
+                  {
+                    "name": "connectivity"
+                  }
+                ],
+                "proactivelyReported": true,
+                "retrievable": true
+              }
+            },
+            {
+              "type": "AlexaInterface",
+              "interface": "Alexa",
+              "version": "3"
+            }
+          ],
+          "connections": [
+            {
+              "type": "TCP_IP",
+              "macAddress": "00:11:22:AA:BB:33:44:55"
+            },
+            {
+              "type": "ZIGBEE",
+              "macAddress": "00:11:22:33:44:55"
+            },
+            {
+              "type": "ZWAVE",
+              "homeId": "<0x00000000>",
+              "nodeId": "<0x00>"
+            },
+            {
+              "type": "UNKNOWN",
+              "value": "00:11:22:33:44:55"
+            }
+          ],
+          "cookie": {}
+        }
+      ]
+    }
+  }
+}

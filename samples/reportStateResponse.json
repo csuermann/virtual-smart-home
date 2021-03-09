@@ -1,0 +1,50 @@
+{
+  "event": {
+    "header": {
+      "messageId": "abc-123-def-456",
+      "correlationToken": "abcdef-123456",
+      "namespace": "Alexa",
+      "name": "StateReport",
+      "payloadVersion": "3"
+    },
+    "endpoint": {
+      "scope": {
+        "type": "BearerToken",
+        "token": "access-token-from-Amazon"
+      },
+      "endpointId": "appliance-001",
+      "cookie": {}
+    },
+    "payload": {}
+  },
+  "context": {
+    "properties": [
+      {
+        "namespace": "Alexa.ThermostatController",
+        "name": "targetSetpoint",
+        "value": {
+          "value": 25.0,
+          "scale": "CELSIUS"
+        },
+        "timeOfSample": "2017-02-03T16:20:50Z",
+        "uncertaintyInMilliseconds": 6000
+      },
+      {
+        "namespace": "Alexa.ThermostatController",
+        "name": "thermostatMode",
+        "value": "HEAT",
+        "timeOfSample": "2017-02-03T16:20:50Z",
+        "uncertaintyInMilliseconds": 6000
+      },
+      {
+        "namespace": "Alexa.EndpointHealth",
+        "name": "connectivity",
+        "value": {
+          "value": "OK"
+        },
+        "timeOfSample": "2017-02-03T16:20:50Z",
+        "uncertaintyInMilliseconds": 0
+      }
+    ]
+  }
+}

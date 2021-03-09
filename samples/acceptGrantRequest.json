@@ -1,0 +1,20 @@
+{
+  "directive": {
+    "header": {
+      "namespace": "Alexa.Authorization",
+      "name": "AcceptGrant",
+      "messageId": "e19e996e-368a-4938-aec8-3590d7c72544",
+      "payloadVersion": "3"
+    },
+    "payload": {
+      "grant": {
+        "type": "OAuth2.AuthorizationCode",
+        "code": "RHynYcsHZJHFKLjNYvEuUBB"
+      },
+      "grantee": {
+        "type": "BearerToken",
+        "token": "Atza|IwEBIKaBFIDygBZaRWp-_zZ_OwXuh-Ks0PXB1z-YxIS09N2_1xKPsnZed62vvwZ8COwCXizcRGHVT4toxfvWGs3jLJnIkOwxxsju0DTOjAj2EQIpLFiELVukH21UCLeA8dlIvxu-Y1IuOXTbf-VU9XdTgYLbjbRcF6AF36ca8I4s4p3yQg51e_3UJlqG-7oAThTEZ_njbmO81Vfh9r2DDaNf5DuKdSa4rIK0zO8NrYTGT331RXYsj__9ox9qdcUNhGweYCr-oV11fjDhhKu4joXeY4NxttkKjuMIdqBv686jaHLCuH_uz8KKYnjmcyVVg7-iD7vnYay3G1f9yWDH8oEpb2V66W-wMju1S2UOPImMrmAB7XGJp3-7Iglw4oLshOyNJ6Ea05n1OvLV9ReJLcs_AOVQ"
+      }
+    }
+  }
+}
