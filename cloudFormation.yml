@@ -1,0 +1,293 @@
+Resources:
+  tblDevices:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: vsh_devices
+      AttributeDefinitions:
+        - AttributeName: deviceId
+          AttributeType: S
+        - AttributeName: thingId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      BillingMode: PROVISIONED
+      GlobalSecondaryIndexes:
+        - IndexName: userId-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        - IndexName: thingId-index
+          KeySchema:
+            - AttributeName: thingId
+              KeyType: HASH
+            - AttributeName: deviceId
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+      KeySchema:
+        - AttributeName: deviceId
+          KeyType: HASH
+        - AttributeName: userId
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  tblTokens:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: vsh_tokens
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      BillingMode: PROVISIONED
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  vshPolicy:
+    Type: AWS::IoT::Policy
+    Properties:
+      PolicyName: virtual-smart-home-things
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - iot:Connect
+            Resource:
+              - Fn::Join:
+                  [
+                    '',
+                    [
+                      !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:client/',
+                      '$',
+                      '{iot:Connection.Thing.ThingName}',
+                    ],
+                  ]
+          - Effect: Allow
+            Action:
+              - iot:Publish
+            Resource:
+              - Fn::Join:
+                  [
+                    '',
+                    [
+                      !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/vsh/',
+                      '$',
+                      '{iot:Connection.Thing.ThingName}/*',
+                    ],
+                  ]
+              - Fn::Join:
+                  [
+                    '',
+                    [
+                      !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/$aws/things/',
+                      '$',
+                      '{iot:Connection.Thing.ThingName}/*',
+                    ],
+                  ]
+          - Effect: Allow
+            Action:
+              - iot:Subscribe
+            Resource:
+              - Fn::Join:
+                  [
+                    '',
+                    [
+                      !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/$aws/things/',
+                      '$',
+                      '{iot:Connection.Thing.ThingName}/*',
+                    ],
+                  ]
+              - Fn::Join:
+                  [
+                    '',
+                    [
+                      !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/vsh/',
+                      '$',
+                      '{iot:Connection.Thing.ThingName}/*',
+                    ],
+                  ]
+              - !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/vsh/version/*
+              - !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/vsh/ping
+              - !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/vsh/service
+          - Effect: Allow
+            Action:
+              - iot:Receive
+            Resource:
+              - Fn::Join:
+                  [
+                    '',
+                    [
+                      !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/$aws/things/',
+                      '$',
+                      '{iot:Connection.Thing.ThingName}/*',
+                    ],
+                  ]
+              - Fn::Join:
+                  [
+                    '',
+                    [
+                      !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/vsh/',
+                      '$',
+                      '{iot:Connection.Thing.ThingName}/*',
+                    ],
+                  ]
+              - !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/vsh/version/*
+              - !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/vsh/ping
+              - !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/vsh/service
+          - Effect: Allow
+            Action:
+              - iot:GetThingShadow
+              - iot:UpdateThingShadow
+              - iot:DeleteThingShadow
+            Resource:
+              - Fn::Join:
+                  [
+                    '',
+                    [
+                      !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:thing/',
+                      '$',
+                      '{iot:Connection.Thing.ThingName}/*',
+                    ],
+                  ]
+
+  vshAdminPolicy:
+    Type: AWS::IoT::Policy
+    Properties:
+      PolicyName: vsh-admin
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: iot:*
+            Resource: '*'
+
+  bulkdiscover:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: bulkdiscover
+      TopicRulePayload:
+        RuleDisabled: false
+        AwsIotSqlVersion: '2016-03-23'
+        Sql: >
+          SELECT
+            'bulkdiscover' as rule,
+            topic(2) as thingId,
+            devices
+          FROM
+            'vsh/+/bulkdiscover'
+        Actions:
+          - Lambda:
+              FunctionArn:
+                Fn::GetAtt: [BackchannelLambdaFunction, Arn]
+
+  bulkundiscover:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: bulkundiscover
+      TopicRulePayload:
+        RuleDisabled: false
+        AwsIotSqlVersion: '2016-03-23'
+        Sql: >
+          SELECT
+            'bulkundiscover' as rule,
+            topic(2) as thingId,
+            devices
+          FROM
+            'vsh/+/bulkundiscover'
+        Actions:
+          - Lambda:
+              FunctionArn:
+                Fn::GetAtt: [BackchannelLambdaFunction, Arn]
+
+  lifecycle:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: lifecycle
+      TopicRulePayload:
+        RuleDisabled: false
+        AwsIotSqlVersion: '2016-03-23'
+        Sql: SELECT * FROM 'vsh/+/update'
+        Actions:
+          - Republish:
+              Topic:
+                Fn::Join: ['', ['$$aws/things/$', '{topic(2)}/shadow/update']]
+              Qos: 1
+              RoleArn:
+                Fn::GetAtt: [IamRoleLambdaExecution, Arn]
+
+  syncDeviceState:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: syncDeviceState
+      TopicRulePayload:
+        RuleDisabled: false
+        AwsIotSqlVersion: '2016-03-23'
+        Sql: >
+          SELECT
+            'syncDeviceState' as rule,
+            state.desired as state,
+            version,
+            timestamp,
+            topic(3) as thingId,
+            topic(6) as endpointId
+          FROM
+            '$aws/things/+/shadow/name/+/update/accepted'
+          WHERE
+            (
+              CASE isUndefined(state.desired.source)
+                WHEN true
+                THEN false
+                ELSE state.desired.source = "alexa"
+              END
+            ) = true
+        Actions:
+          - Republish:
+              Topic:
+                Fn::Join: ['', ['vsh/$', '{topic(3)}/$', '{topic(6)}/update']]
+              Qos: 1
+              RoleArn:
+                Fn::GetAtt: [IamRoleLambdaExecution, Arn]
+
+  syncAlexaState:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: syncAlexaState
+      TopicRulePayload:
+        RuleDisabled: false
+        AwsIotSqlVersion: '2016-03-23'
+        Sql: >
+          SELECT
+            'syncAlexaState' as rule,
+            state.reported as state,
+            version,
+            timestamp,
+            topic(3) as thingId,
+            topic(6) as endpointId
+          FROM
+            '$aws/things/+/shadow/name/+/update/accepted'
+          WHERE
+            (
+              CASE isUndefined(state.reported.source)
+                WHEN true
+                THEN false
+                ELSE state.reported.source = "device"
+              END
+            ) = true
+        Actions:
+          - Lambda:
+              FunctionArn:
+                Fn::GetAtt: [BackchannelLambdaFunction, Arn]

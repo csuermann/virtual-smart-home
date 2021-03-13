@@ -1,6 +1,4 @@
 import Axios, { AxiosResponse } from 'axios'
-import * as dayjs from 'dayjs'
-import { docClient } from './db'
 
 export interface AccessTokenResponse {
   access_token: string
@@ -19,18 +17,22 @@ export interface TokenRecord {
   skillRegion?: string
 }
 
-export async function fetchAccessAndRefreshToken (
+export async function fetchAccessAndRefreshToken(
   event
 ): Promise<AccessTokenResponse> {
-  const response: AxiosResponse = await Axios.post(
-    'https://api.amazon.com/auth/o2/token',
-    `grant_type=authorization_code&code=${event.directive.payload.grant.code}&client_id=${process.env.ALEXA_CLIENT_ID}&client_secret=${process.env.ALEXA_CLIENT_SECRET}`,
-    {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    }
-  )
+  const data = `grant_type=authorization_code&code=${event.directive.payload.grant.code}&client_id=${process.env.ALEXA_CLIENT_ID}&client_secret=${process.env.ALEXA_CLIENT_SECRET}`
+  const url = 'https://api.amazon.com/auth/o2/token'
+  const response: AxiosResponse = await Axios.post(url, data, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  })
+
+  console.log(':::fetchAccessAndRefreshToken:::')
+  console.log(url)
+  console.log(data)
+  console.log(response.data)
+  //throw new Error('TEST ERROR')
 
   // {
   //   "access_token":"Atza|IQEBLjAsAhRmHjNmHpi0U-Dme37rR6CuUpSR...",
@@ -38,10 +40,11 @@ export async function fetchAccessAndRefreshToken (
   //   "expires_in":3600,
   //   "refresh_token":"Atzr|IQEBLzAtAhRxpMJxdwVz2Nn6f2y-tpJX3DeX..."
   // }
+
   return response.data
 }
 
-export async function fetchFreshAccessToken (
+export async function fetchFreshAccessToken(
   refreshToken: string
 ): Promise<AccessTokenResponse> {
   const response: AxiosResponse = await Axios.post(
@@ -49,8 +52,8 @@ export async function fetchFreshAccessToken (
     `grant_type=refresh_token&refresh_token=${refreshToken}&client_id=${process.env.ALEXA_CLIENT_ID}&client_secret=${process.env.ALEXA_CLIENT_SECRET}`,
     {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     }
   )
 

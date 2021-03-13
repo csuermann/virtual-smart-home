@@ -174,7 +174,7 @@ app.post('/provision', async function (req, res) {
     await addThingToThingGroup(thingName, 'virtual-smart-home-things')
 
     const response = {
-      server: 'a1pv0eq8s016ut-ats.iot.eu-west-1.amazonaws.com',
+      server: process.env.VSH_IOT_ENDPOINT, //'a1pv0eq8s016ut-ats.iot.eu-west-1.amazonaws.com'
       port: 8883,
       cert: encode(certificatePem),
       privateKey: encode(privateKey),

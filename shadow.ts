@@ -15,10 +15,10 @@ export interface Shadow {
 
 async function fetchShadow(path: string): Promise<Shadow | boolean> {
   let opts: any = {
-    host: 'a1pv0eq8s016ut-ats.iot.eu-west-1.amazonaws.com',
+    host: process.env.VSH_IOT_ENDPOINT, //'a1pv0eq8s016ut-ats.iot.eu-west-1.amazonaws.com'
     path: path,
     service: 'iotdata',
-    region: 'eu-west-1',
+    region: process.env.VSH_IOT_REGION, //'eu-west-1'
   }
 
   aws4.sign(opts)

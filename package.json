@@ -5,15 +5,14 @@
   "main": "handler.js",
   "scripts": {
     "build": "webpack",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "discover": "serverless invoke local -f app -p ./samples/discoveryRequest.json"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "@types/semver": "^7.3.4",
     "ask-sdk": "^2.3.0",
     "aws-sdk": "^2.742.0",
     "aws4": "^1.10.1",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "cors": "^2.8.5",
     "dayjs": "^1.8.34",
     "express": "^4.17.1",

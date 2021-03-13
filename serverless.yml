@@ -1,7 +1,4 @@
-org: csuermann
-app: virtual-smart-home
-service:
-  name: virtual-smart-home
+service: virtual-smart-home
 
 plugins:
   - serverless-plugin-select
@@ -15,36 +12,33 @@ provider:
 
   environment:
     VSH_IOT_REGION: 'eu-west-1'
-    ALEXA_CLIENT_ID:
-      ${ssm:/virtual-smart-home/${self:custom.myStage}/ALEXA_CLIENT_ID,
-      'amzn1.application-oa2-client.1ee6...'}
-      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_ID" --value "amzn1.application-oa2-client.XXXXX" --type String --overwrite --region eu-west-1
-      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_ID" --value "amzn1.application-oa2-client.XXXXX" --type String --overwrite --region us-east-1
-      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_ID" --value "amzn1.application-oa2-client.XXXXX" --type String --overwrite --region us-west-2
-    ALEXA_CLIENT_SECRET:
-      ${ssm:/virtual-smart-home/${self:custom.myStage}/ALEXA_CLIENT_SECRET~true,
-      '8352892545675...'}
-      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_SECRET" --value "XXXXX" --type SecureString --overwrite --region eu-west-1
-      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_SECRET" --value "XXXXX" --type SecureString --overwrite --region us-east-1
-      #aws ssm put-parameter --name "/virtual-smart-home/dev/ALEXA_CLIENT_SECRET" --value "XXXXX" --type SecureString --overwrite --region us-west-2
+    VSH_IOT_ENDPOINT: ${env:IOT_ENDPOINT, self:env.IOT_ENDPOINT}
+    ALEXA_CLIENT_ID: ${env:ALEXA_CLIENT_ID, self:env.ALEXA_CLIENT_ID}
+    ALEXA_CLIENT_SECRET: ${env:ALEXA_CLIENT_SECRET, self:env.ALEXA_CLIENT_SECRET}
 
   iamRoleStatements:
-    - Effect: 'Allow'
+    - Effect: Allow
       Action:
-        - 'iot:publish'
-      Resource: ['*']
-    - Effect: 'Allow'
+        - iot:*
+      Resource:
+        - '*'
+    - Effect: Allow
       Action:
-        - 'dynamodb:*'
-      Resource: ['arn:aws:dynamodb:eu-west-1:146271617960:table/vsh_*']
-    - Effect: 'Allow'
+        - dynamodb:*
+      Resource:
+        - !Sub arn:aws:dynamodb:${self:provider.environment.VSH_IOT_REGION}:${AWS::AccountId}:table/vsh_*
+    - Effect: Allow
       Action:
-        - 'cloudwatch:PutMetricData'
-      Resource: ['*']
+        - cloudwatch:PutMetricData
+      Resource:
+        - '*'
 
 custom:
-  myStage: ${opt:stage, self:provider.stage}
-  myRegion: ${opt:region, self:provider.region}
+  myStage: ${opt:stage, self:provider.stage} #self:custom.myStage
+  myRegion: ${opt:region, self:provider.region} #self:custom.myRegion
+  myAccountId: !Sub ${AWS::AccountId} #self:custom.myAccountId
+
+env: ${file(env.json)}
 
 functions:
   skill:
@@ -54,34 +48,38 @@ functions:
       - us-west-2
     handler: handler.alexa
     timeout: 10
+    maximumRetryAttempts: 0
     events:
-      - alexaSmartHome: amzn1.ask.skill.9dc935df-231a-47f2-bff9-9704683cf896
+      - alexaSmartHome: ${env:SKILL_ID, self:env.SKILL_ID}
 
   backchannel:
     regions:
-      - eu-west-1
+      - ${self:provider.environment.VSH_IOT_REGION}
     handler: handler.backchannel
 
   cleanup:
     regions:
-      - eu-west-1
+      - ${self:provider.environment.VSH_IOT_REGION}
     handler: cleanup.cleanup
     timeout: 300
+    maximumRetryAttempts: 0
     events:
       - schedule: cron(0 3 * * ? *)
 
   metrics:
     regions:
-      - eu-west-1
+      - ${self:provider.environment.VSH_IOT_REGION}
     handler: metrics.metrics
     timeout: 15
+    maximumRetryAttempts: 0
     events:
       - schedule: cron(0/15 * * * ? *)
 
   provision:
     regions:
-      - eu-west-1
+      - ${self:provider.environment.VSH_IOT_REGION}
     handler: provision.provision
+    maximumRetryAttempts: 0
     events:
       - http:
           path: provision
@@ -99,3 +97,5 @@ functions:
           path: check_version
           method: get
           cors: true
+
+resources: ${file(cloudFormation.yml)}
