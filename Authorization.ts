@@ -28,11 +28,10 @@ export async function fetchAccessAndRefreshToken(
     },
   })
 
-  console.log(':::fetchAccessAndRefreshToken:::')
-  console.log(url)
-  console.log(data)
-  console.log(response.data)
-  //throw new Error('TEST ERROR')
+  // console.log(':::fetchAccessAndRefreshToken:::')
+  // console.log(url)
+  // console.log(data)
+  // console.log(response.data)
 
   // {
   //   "access_token":"Atza|IQEBLjAsAhRmHjNmHpi0U-Dme37rR6CuUpSR...",

@@ -175,6 +175,35 @@ Resources:
             Action: iot:*
             Resource: '*'
 
+  myIotRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service: iot.amazonaws.com
+
+  myIotPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: my-iot-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - iot:*
+              - logs:*
+              - lambda:InvokeFunction
+              - sns:Publish
+            Resource: '*'
+      Roles:
+        - Ref: myIotRole
+
   bulkdiscover:
     Type: AWS::IoT::TopicRule
     Properties:
@@ -193,6 +222,15 @@ Resources:
           - Lambda:
               FunctionArn:
                 Fn::GetAtt: [BackchannelLambdaFunction, Arn]
+        #   - cloudwatchLogs: # not yet supported by cfn! See https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/592
+        #       logGroupName: 'IotLogs'
+        #       roleArn:
+        #         Fn::GetAtt: [myIotRole, Arn]
+        # ErrorAction:
+        #   cloudwatchLogs: # not yet supported by cfn! See https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/592
+        #     logGroupName: 'IotRuleErrors'
+        #     roleArn:
+        #       Fn::GetAtt: [myIotRole, Arn]
 
   bulkundiscover:
     Type: AWS::IoT::TopicRule
@@ -211,7 +249,7 @@ Resources:
         Actions:
           - Lambda:
               FunctionArn:
-                Fn::GetAtt: [BackchannelLambdaFunction, Arn]
+                Fn::GetAtt: [myIotRole, Arn]
 
   lifecycle:
     Type: AWS::IoT::TopicRule
@@ -227,7 +265,7 @@ Resources:
                 Fn::Join: ['', ['$$aws/things/$', '{topic(2)}/shadow/update']]
               Qos: 1
               RoleArn:
-                Fn::GetAtt: [IamRoleLambdaExecution, Arn]
+                Fn::GetAtt: [myIotRole, Arn]
 
   syncDeviceState:
     Type: AWS::IoT::TopicRule
@@ -260,7 +298,7 @@ Resources:
                 Fn::Join: ['', ['vsh/$', '{topic(3)}/$', '{topic(6)}/update']]
               Qos: 1
               RoleArn:
-                Fn::GetAtt: [IamRoleLambdaExecution, Arn]
+                Fn::GetAtt: [myIotRole, Arn]
 
   syncAlexaState:
     Type: AWS::IoT::TopicRule
@@ -290,4 +328,4 @@ Resources:
         Actions:
           - Lambda:
               FunctionArn:
-                Fn::GetAtt: [BackchannelLambdaFunction, Arn]
+                Fn::GetAtt: [myIotRole, Arn]
