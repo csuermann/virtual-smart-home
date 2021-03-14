@@ -1,4 +1,4 @@
-setEnv.sh
+setEnv*.sh
 
 # package directories
 node_modules
