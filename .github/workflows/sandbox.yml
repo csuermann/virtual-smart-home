@@ -24,12 +24,9 @@ jobs:
         with:
           args: deploy
         env:
-          #SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
-          # or if using AWS credentials directly
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_SANDBOX }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_SANDBOX }}
+          IOT_ENDPOINT: ${{ secrets.IOT_ENDPOINT_SANDBOX }}
           SKILL_ID: ${{ secrets.SKILL_ID }}
           ALEXA_CLIENT_ID: ${{ secrets.ALEXA_CLIENT_ID }}
           ALEXA_CLIENT_SECRET: ${{ secrets.ALEXA_CLIENT_SECRET }}
-          IOT_ENDPOINT: ${{ secrets.IOT_ENDPOINT_SANDBOX }}

@@ -12,9 +12,9 @@ provider:
 
   environment:
     VSH_IOT_REGION: 'eu-west-1'
-    VSH_IOT_ENDPOINT: ${env:IOT_ENDPOINT, self:env.IOT_ENDPOINT}
-    ALEXA_CLIENT_ID: ${env:ALEXA_CLIENT_ID, self:env.ALEXA_CLIENT_ID}
-    ALEXA_CLIENT_SECRET: ${env:ALEXA_CLIENT_SECRET, self:env.ALEXA_CLIENT_SECRET}
+    VSH_IOT_ENDPOINT: ${env:IOT_ENDPOINT}
+    ALEXA_CLIENT_ID: ${env:ALEXA_CLIENT_ID}
+    ALEXA_CLIENT_SECRET: ${env:ALEXA_CLIENT_SECRET}
 
   iamRoleStatements:
     - Effect: Allow
@@ -38,8 +38,6 @@ custom:
   myRegion: ${opt:region, self:provider.region} #self:custom.myRegion
   myAccountId: !Sub ${AWS::AccountId} #self:custom.myAccountId
 
-env: ${file(env.json)}
-
 functions:
   skill:
     regions:
@@ -50,7 +48,7 @@ functions:
     timeout: 10
     maximumRetryAttempts: 0
     events:
-      - alexaSmartHome: ${env:SKILL_ID, self:env.SKILL_ID}
+      - alexaSmartHome: ${env:SKILL_ID}
 
   backchannel:
     regions:
