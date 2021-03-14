@@ -72,6 +72,7 @@ aws lambda update-alias --function-name virtual-smart-home-dev-skill --function-
 1. Note down the IoT endpoint for your AWS account
     - `aws iot describe-endpoint --endpoint-type iot:Data-ATS`
 1. Create a new security profile called "vsh" at https://developer.amazon.com/settings/console/securityprofile/overview.html
+    - TODO: check wether the security profile actually gets created automatically at the time of the skill creation!
     - Note down Client ID and Client Secret (tab: Web Settings). You'll need to add these to set up Account Linking in the Alexa Developer Console
     - Create a new "Device Client" called "node-red-contrib-virtual-smart-home" (tab: TV and other Device Settings) and note down the Client Id
       - you'll need that Client Id to customize your installation of Node-RED-contrib-virtual-smart-home
