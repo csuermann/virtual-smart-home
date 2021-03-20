@@ -77,6 +77,7 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 
    `aws iot create-billing-group --billing-group-name virtual-smart-home-billing-group`
 1. run `npm install`
+1. install the serverless framework by running `npm install -g serverless`
 1. run `serverless deploy`
 1. Note down the POST endpoint printed as part of the `serverless deploy` output
     - e.g. https://xxxxxxxxxx.execute-api.eu-west-1.amazonaws.com/dev/provision
@@ -84,12 +85,12 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 
    `aws lambda get-function --function-name virtual-smart-home-dev-skill`
 1. In the Alexa Developer Console click on 'Smart Home' in the side menu
-1. Paste the value of the FunctionArn (from step 19) as 'Default Endpoint' as well as for 'Europe / India'
+1. Paste the value of the FunctionArn (from step 20) as 'Default Endpoint' as well as for 'Europe / India'
 1. Click Save
 1. Open the `settings.js` file of your Node-RED installation and add the following just before the closeing "}"
 
     ```javascript
-    vshConnectionBackendBaseUrl: "X", //replace X with the value you noted down in step 15, BUT WITHOUT THE trailing '/provision' !!!
+    vshConnectionBackendBaseUrl: "X", //replace X with the value you noted down in step 19, BUT WITHOUT THE trailing '/provision' !!!
     vshConnectionLwaClientId: "X", //replace X with the value you noted down as 'Client Id' in step 6.12
     vshConnectionShowSettings: true,
     ```
