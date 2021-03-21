@@ -198,11 +198,18 @@ Resources:
             Action:
               - iot:*
               - logs:*
-              - lambda:InvokeFunction
-              - sns:Publish
+              #- lambda:InvokeFunction
+              #- sns:Publish
             Resource: '*'
       Roles:
         - Ref: myIotRole
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: { Fn::GetAtt: [BackchannelLambdaFunction, Arn] }
+      Action: lambda:InvokeFunction
+      Principal: iot.amazonaws.com
 
   bulkdiscover:
     Type: AWS::IoT::TopicRule
