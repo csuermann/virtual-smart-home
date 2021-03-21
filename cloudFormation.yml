@@ -249,7 +249,7 @@ Resources:
         Actions:
           - Lambda:
               FunctionArn:
-                Fn::GetAtt: [myIotRole, Arn]
+                Fn::GetAtt: [BackchannelLambdaFunction, Arn]
 
   lifecycle:
     Type: AWS::IoT::TopicRule
@@ -328,4 +328,4 @@ Resources:
         Actions:
           - Lambda:
               FunctionArn:
-                Fn::GetAtt: [myIotRole, Arn]
+                Fn::GetAtt: [BackchannelLambdaFunction, Arn]
