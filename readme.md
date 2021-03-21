@@ -11,10 +11,10 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
     1. `git clone git@github.com:csuermann/virtual-smart-home.git`
     1. Switch to the 'sandbox' branch
 
-       `git checkout sandbox`
+       `git checkout --track origin/sandbox`
 1. Create a new [AWS Account](https://portal.aws.amazon.com/) (or use your existing one)
     1. Create a user for programatic access as described in the first 1 minute and 13 seconds of [this video](https://www.youtube.com/watch?v=KngM5bfpttA)
-    1. export your newly created user credentials as environment variables
+    1. export your newly created user credentials and default region as environment variables
 
        `export AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXXXXX`
 
@@ -105,6 +105,8 @@ Now you need to configure your Node-RED instance to use _your_ backend instead o
 
 ## Testing that everything works
 
+1. Activate your skill in the Alexa app and complete the Account Linking process (your skill should show up under 'Your skills > Developer')
+1. In your AWS account, check the CloudWatch log group '/aws/lambda/virtual-smart-home-dev-skill'. It should contain an "AcceptGrant" request from Alexa and a corresponding response.
 1. Open your Node-RED frontend
 1. Add a new 'virtual device' to your flow and name it 'foo bar'
 1. Open the Developer Tools' network tab
@@ -113,8 +115,11 @@ Now you need to configure your Node-RED instance to use _your_ backend instead o
 1. Observe the activity on the DevTools network tab
    - the call to 'check_version' should go out to _your own_ backend URL (which you configured as 'vshConnectionBackendBaseUrl' in your Node-RED settings.js file)
    - the request payload to 'https://api.amazon.com/auth/o2/create/codepair' should include the 'client_id' of the security profile you configured earlier ('vshConnectionLwaClientId' in your Node-RED settings.js file)
-1. Complete the code pairing process and deploy your Node-RED flow
+1. Complete the code pairing process
+1. Activate the 'Debug' option of the vsh-connection node
+1. Deploy your Node-RED flow
 1. Your virtual 'foo bar' device should now get discovered by Alexa.
+1. Check the MQTT traffic being logged to stdout of Node-RED
 1. Go to the [IoT section](https://eu-west-1.console.aws.amazon.com/iot/home?region=eu-west-1#/thinghub) in your AWS account and click on 'Manage > Things' in the side menu
    - The list should contain one 'Thing' representing your configured vsh-connection
 1. Click on the thing and inspect its shadow documents that hold the state of your device
