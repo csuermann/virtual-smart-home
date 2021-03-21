@@ -11,7 +11,7 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
     1. `git clone git@github.com:csuermann/virtual-smart-home.git`
     1. Switch to the 'sandbox' branch
 
-       `git branch sandbox`
+       `git checkout sandbox`
 1. Create a new [AWS Account](https://portal.aws.amazon.com/) (or use your existing one)
     1. Create a user for programatic access as described in the first 1 minute and 13 seconds of [this video](https://www.youtube.com/watch?v=KngM5bfpttA)
     1. export your newly created user credentials as environment variables
@@ -19,6 +19,8 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
        `export AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXXXXX`
 
        `export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
+
+       `export AWS_DEFAULT_REGION=eu-west-1`
 1. Create an [Amazon Developer Account](https://developer.amazon.com/) (or use your existing one)
 1. Create a [new Alexa skill](https://developer.amazon.com/alexa/console/ask/create-new-skill)
     1. Name it 'my private vsh'
@@ -32,8 +34,8 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
     1. Fill out the form fields
         - Your Web Authorization URI: https://www.amazon.com/ap/oa
         - Access Token URI: https://api.amazon.com/auth/o2/token
-        - Your Client ID: _leave empty for now, you'll get this info in a later step_
-        - Your Secret: _leave empty for now, you'll get this info in a later step_
+        - Your Client ID: _put in xxx for now, you'll get the needed info in a later step_
+        - Your Secret: _put in xxx for now, you'll get the needed info in a later step_
         - Your Authentication Scheme: HTTP Basic
         - Scope: profile
     1. Note down all 'Alexa Redirect URLs'
@@ -87,6 +89,11 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 1. In the Alexa Developer Console click on 'Smart Home' in the side menu
 1. Paste the value of the FunctionArn (from step 20) as 'Default Endpoint' as well as for 'Europe / India'
 1. Click Save
+1. Your own backend should now be set up! Congratulations!
+
+## Configuring Node-RED
+Now you need to configure your Node-RED instance to use _your_ backend instead of the official one. Note that you cannot use multiple backends in parallel.
+
 1. Open the `settings.js` file of your Node-RED installation and add the following just before the closeing "}"
 
     ```javascript
@@ -94,3 +101,21 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
     vshConnectionLwaClientId: "X", //replace X with the value you noted down as 'Client Id' in step 6.12
     vshConnectionShowSettings: true,
     ```
+1. Restart Node-RED
+
+## Testing that everything works
+
+1. Open your Node-RED frontend
+1. Add a new 'virtual device' to your flow and name it 'foo bar'
+1. Open the Developer Tools' network tab
+1. Double click on your virtual 'foo bar' device to open the editor
+1. Select 'add new vsh-connection' as 'connection' and click the pen icon
+1. Observe the activity on the DevTools network tab
+   - the call to 'check_version' should go out to _your own_ backend URL (which you configured as 'vshConnectionBackendBaseUrl' in your Node-RED settings.js file)
+   - the request payload to 'https://api.amazon.com/auth/o2/create/codepair' should include the 'client_id' of the security profile you configured earlier ('vshConnectionLwaClientId' in your Node-RED settings.js file)
+1. Complete the code pairing process and deploy your Node-RED flow
+1. Your virtual 'foo bar' device should now get discovered by Alexa.
+1. Go to the [IoT section](https://eu-west-1.console.aws.amazon.com/iot/home?region=eu-west-1#/thinghub) in your AWS account and click on 'Manage > Things' in the side menu
+   - The list should contain one 'Thing' representing your configured vsh-connection
+1. Click on the thing and inspect its shadow documents that hold the state of your device
+1. Click on the 'Activity' menu item and observe shadow changes as you control your virtual device through Alexa
