@@ -26,7 +26,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -40,7 +40,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -77,7 +77,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -91,7 +91,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -105,7 +105,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -119,7 +119,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -133,7 +133,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -170,7 +170,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -184,7 +184,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -198,7 +198,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -235,7 +235,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -249,7 +249,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -263,7 +263,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -332,7 +332,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
         configuration: {
           supportedRange: {
@@ -449,7 +449,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -486,7 +486,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -500,7 +500,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -537,7 +537,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -551,7 +551,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -588,7 +588,7 @@ export default {
               name: 'mode',
             },
           ],
-          retrievable: true,
+          retrievable: false,
           proactivelyReported: true,
         },
         capabilityResources: {
@@ -694,7 +694,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -731,7 +731,7 @@ export default {
   //           },
   //         ],
   //         proactivelyReported: true,
-  //         retrievable: true,
+  //         retrievable: false,
   //       },
   //     },
   //     {
@@ -745,7 +745,7 @@ export default {
   //           },
   //         ],
   //         proactivelyReported: true,
-  //         retrievable: true,
+  //         retrievable: false,
   //       },
   //     },
   //     {
@@ -783,7 +783,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
         capabilityResources: {
           friendlyNames: [
@@ -876,7 +876,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -935,7 +935,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
         configuration: {
           supportedModes: [
@@ -958,7 +958,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {

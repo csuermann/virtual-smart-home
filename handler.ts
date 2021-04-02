@@ -21,7 +21,7 @@ import { publish } from './mqtt'
  * @param event
  * @param context
  */
-export const alexa = async function (event, context) {
+export const skill = async function (event, context) {
   try {
     const accessToken = extractAccessTokenFromEvent(event)
     event.profile = await fetchProfile(accessToken)
@@ -53,8 +53,13 @@ export const alexa = async function (event, context) {
       console.log('RESPONSE', JSON.stringify(response))
       return response
 
-    case 'ReportState':
-      response = await handleReportState(event)
+    case 'ReportState': //deprecated
+      response = createErrorResponse(
+        event,
+        'ENDPOINT_UNREACHABLE',
+        'VSH no longer supports the ReportState directive'
+      )
+      //response = await handleReportState(event)
       console.log('RESPONSE', JSON.stringify(response))
       return response
 

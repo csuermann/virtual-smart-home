@@ -1,5 +1,5 @@
 import { publish } from '../mqtt'
-import { Shadow, buildPropertiesFromShadow, fetchDeviceShadow } from '../shadow'
+import { Shadow, fetchDeviceShadow } from '../shadow'
 
 interface Property {
   namespace: string
@@ -163,7 +163,7 @@ const directiveResolvers: ResolverHashmap = {
       )
     )
 
-    if (shadow.state?.reported?.template === 'BLINDS') {
+    if (event.directive.endpoint.cookie.template === 'BLINDS') {
       const instance = 'Blinds.Position'
       const mode =
         event.directive.payload.percentage == 100
@@ -321,7 +321,7 @@ const directiveResolvers: ResolverHashmap = {
       instance: event.directive.header.instance,
     }
 
-    if (shadow.state?.reported?.template === 'BLINDS') {
+    if (event.directive.endpoint.cookie.template === 'BLINDS') {
       const percentage =
         event.directive.payload.mode === 'Position.Up' ? 100 : 0
 

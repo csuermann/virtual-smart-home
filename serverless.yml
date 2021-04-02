@@ -44,7 +44,7 @@ functions:
       - eu-west-1
       - us-east-1
       - us-west-2
-    handler: handler.alexa
+    handler: handler.skill
     timeout: 10
     maximumRetryAttempts: 0
     events:
