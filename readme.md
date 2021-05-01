@@ -117,10 +117,10 @@ Now you need to configure your Node-RED vsh-connection node to use _your_ backen
 1. Add a new 'virtual device' to your flow and name it 'foo bar'
 1. Open the Developer Tools' network tab
 1. Double click on your virtual 'foo bar' device to open the editor
-1. Select 'add new vsh-connection' as 'connection' and click the pen icon
+1. Follow the instructions above to configure the vsh-connection to interact with your own backend
 1. Observe the activity on the DevTools network tab
-   - the call to 'check_version' should go out to your own backend URL (which you configured as 'vshConnectionBackendBaseUrl' in your Node-RED settings.js file)
-   - the request payload to 'https://api.amazon.com/auth/o2/create/codepair' should include the 'client_id' of the security profile you configured earlier ('vshConnectionLwaClientId' in your Node-RED settings.js file)
+   - the call to 'check_version' should go out to your own backend URL
+   - the request payload to 'https://api.amazon.com/auth/o2/create/codepair' should include the 'client_id' of the security profile you configured earlier
 1. Complete the code pairing process
 1. Activate the 'Debug' option of the vsh-connection node
 1. Deploy your Node-RED flow
