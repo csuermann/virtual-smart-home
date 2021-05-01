@@ -92,16 +92,20 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 1. Your own backend should now be set up! Congratulations!
 
 ## Configuring Node-RED
-Now you need to configure your Node-RED instance to use _your_ backend instead of the official one. Note that you cannot use multiple backends in parallel.
+Now you need to configure your Node-RED vsh-connection node to use _your_ backend instead of the official one.
 
 1. Open the `settings.js` file of your Node-RED installation and add the following just before the closeing "}"
 
     ```javascript
-    vshConnectionBackendBaseUrl: "X", //replace X with the value you noted down in step 19, BUT WITHOUT THE trailing '/provision' !!!
-    vshConnectionLwaClientId: "X", //replace X with the value you noted down as 'Client Id' in step 6.12
     vshConnectionShowSettings: true,
     ```
 1. Restart Node-RED
+1. Create a new vsh node and configure chose 'add new vsh-connection' from the connection dropdown
+1. Replace the 'Backend URL' with the value you noted down in step 19, BUT WITHOUT THE trailing '/provision' !!!
+1. Replace 'LWA Client ID' with the value you noted down as 'Client Id' in step 6.12
+1. Click 'Add'
+1. Come back to the previous page by clicking the pen-icon
+1. Follow the account linking instructions, which should now go against your own backend
 
 ## Testing that everything works
 
