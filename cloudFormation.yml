@@ -307,31 +307,19 @@ Resources:
               RoleArn:
                 Fn::GetAtt: [myIotRole, Arn]
 
-  syncAlexaState:
+  changeReport:
     Type: AWS::IoT::TopicRule
     Properties:
-      RuleName: syncAlexaState
+      RuleName: changeReport
       TopicRulePayload:
         RuleDisabled: false
         AwsIotSqlVersion: '2016-03-23'
         Sql: >
           SELECT
-            'syncAlexaState' as rule,
-            state.reported as state,
-            version,
-            timestamp,
-            topic(3) as thingId,
-            topic(6) as endpointId
-          FROM
-            '$aws/things/+/shadow/name/+/update/accepted'
-          WHERE
-            (
-              CASE isUndefined(state.reported.source)
-                WHEN true
-                THEN false
-                ELSE state.reported.source = "device"
-              END
-            ) = true
+            'changeReport' as rule,
+            topic(2) as thingId,
+            *
+          FROM 'vsh/+/changeReport'
         Actions:
           - Lambda:
               FunctionArn:

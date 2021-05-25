@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { getStoredTokenRecord } from './db'
 import { getEndpointsForDevices } from './handlers/discover'
-import { buildPropertiesFromShadow } from './shadow'
 
 import AWS = require('aws-sdk')
 import Device from './Device'
@@ -80,21 +79,26 @@ export function createErrorResponse(
   return errResponse
 }
 
-export async function pushDeviceStateToAlexa(userId: string, event) {
+/**
+ * https://developer.amazon.com/en-US/docs/alexa/smarthome/state-reporting-for-a-smart-home-skill.html#report-state-with-changereport-events
+ */
+export async function pushChangeReportToAlexa(userId: string, event) {
   const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
 
-  let properties = await buildPropertiesFromShadow({
-    thingId: event.thingId,
-    endpointId: event.endpointId,
-    includeConnectivity: false,
-  })
+  let { endpointId, properties, causeType } = event
+
+  properties = (properties as []).map((prop: Object) => ({
+    ...prop,
+    timeOfSample: new Date().toISOString(),
+    uncertaintyInMilliseconds: 500,
+  }))
 
   const changeReport = {
     event: {
       header: {
-        messageId: uuidv4(),
         namespace: 'Alexa',
         name: 'ChangeReport',
+        messageId: uuidv4(),
         payloadVersion: '3',
       },
       endpoint: {
@@ -102,20 +106,46 @@ export async function pushDeviceStateToAlexa(userId: string, event) {
           type: 'BearerToken',
           token: accessToken,
         },
-        endpointId: event.endpointId,
+        endpointId,
+        //cookie: {},
       },
       payload: {
         change: {
           cause: {
-            type: 'PHYSICAL_INTERACTION',
+            type: causeType,
           },
-          properties,
+          //only the properties that changed
+          properties: properties
+            .filter((prop) => prop.changed === true)
+            .map((prop) => {
+              delete prop.changed
+              return prop
+            }),
         },
       },
     },
+    context: {
+      //all other attributes that did not change
+      properties: properties
+        .filter((prop) => prop.changed === false)
+        .map((prop) => {
+          delete prop.changed
+          return prop
+        }),
+    },
   }
 
-  console.log('CHANGE-REPORT', JSON.stringify(changeReport))
+  changeReport.context.properties.push({
+    namespace: 'Alexa.EndpointHealth',
+    name: 'connectivity',
+    value: {
+      value: 'OK',
+    },
+    timeOfSample: new Date().toISOString(),
+    uncertaintyInMilliseconds: 250,
+  })
+
+  console.log('CHANGE REPORT', JSON.stringify(changeReport))
 
   const response: AxiosResponse = await Axios.post(
     getEventGatewayUrl(skillRegion),

@@ -2,16 +2,15 @@ import 'source-map-support/register'
 import {
   extractAccessTokenFromEvent,
   createErrorResponse,
-  pushDeviceStateToAlexa,
   fetchProfile,
   describeThing,
   proactivelyDiscoverDevices,
   proactivelyUndiscoverDevices,
+  pushChangeReportToAlexa,
 } from './helper'
 import handleDiscover from './handlers/discover'
 import handleAcceptGrant from './handlers/acceptGrant'
-import handleReportState from './handlers/reportState'
-import handleDirective from './handlers/updateState'
+import { handleDirective } from './handlers/updateState'
 import { deleteDevice, upsertDevice } from './db'
 import Device from './Device'
 import { publish } from './mqtt'
@@ -56,42 +55,15 @@ export const skill = async function (event, context) {
     case 'ReportState': //deprecated
       response = createErrorResponse(
         event,
-        'ENDPOINT_UNREACHABLE',
+        'INVALID_DIRECTIVE',
         'VSH no longer supports the ReportState directive'
       )
-      //response = await handleReportState(event)
-      console.log('RESPONSE', JSON.stringify(response))
-      return response
-
-    case 'TurnOn':
-    case 'TurnOff':
-    case 'AdjustBrightness':
-    case 'SetBrightness':
-    case 'SetColor':
-    case 'SetColorTemperature':
-    case 'IncreaseColorTemperature':
-    case 'DecreaseColorTemperature':
-    case 'SetPercentage':
-    // case 'Lock':
-    // case 'Unlock':
-    case 'SetMode':
-    case 'SetRangeValue':
-    case 'AdjustRangeValue':
-    case 'Activate':
-    case 'Deactivate':
-    case 'SetTargetTemperature':
-    case 'AdjustTargetTemperature':
-      response = await handleDirective(event)
       console.log('RESPONSE', JSON.stringify(response))
       return response
 
     default:
-      response = createErrorResponse(
-        event,
-        'INVALID_DIRECTIVE',
-        'directive can not yet be handled'
-      )
-      console.log('ERROR RESPONSE', JSON.stringify(response))
+      response = await handleDirective(event)
+      console.log('RESPONSE', JSON.stringify(response))
       return response
   }
 }
@@ -103,7 +75,6 @@ export const backchannel = async function (event, context) {
 
   switch (event.rule) {
     case 'discover':
-      //result = await handleBackchannelDiscover(event)
       result = await killDeviceDueToOutdatedVersion(event)
       break
 
@@ -115,8 +86,8 @@ export const backchannel = async function (event, context) {
       result = await handleBackchannelBulkUndiscover(event)
       break
 
-    case 'syncAlexaState':
-      result = await handleBackchannelSyncAlexaState(event)
+    case 'changeReport':
+      result = await handleChangeReport(event)
       break
   }
 
@@ -134,32 +105,6 @@ async function killDeviceDueToOutdatedVersion(event) {
   console.log(`killed thing ${thingId} due to outdated client version!`)
 
   return true
-}
-
-/** @deprecated */
-async function handleBackchannelDiscover(event) {
-  const userId = await lookupUserIdForThing(event.thingId)
-
-  if (!userId) {
-    return false
-  }
-
-  const device = {
-    deviceId: event.deviceId,
-    userId,
-    thingId: event.thingId,
-    friendlyName: event.friendlyName,
-    template: event.template,
-  }
-
-  await upsertDevice(device)
-
-  try {
-    return await proactivelyDiscoverDevices(userId, [device])
-  } catch (e) {
-    console.log('proactivelyDiscoverDevices FAILED!', e.message)
-    return false
-  }
 }
 
 async function handleBackchannelBulkDiscover(event) {
@@ -219,6 +164,7 @@ export async function handleBackchannelBulkUndiscover({ thingId, devices }) {
       thingId: device.thingId,
     })
 
+    //::TODO:: delete this in an upcoming version (once <2.0.0 is no longer in use)
     await publish(
       `$aws/things/${device.thingId}/shadow/name/${device.deviceId}/delete`,
       {}
@@ -228,7 +174,7 @@ export async function handleBackchannelBulkUndiscover({ thingId, devices }) {
   await proactivelyUndiscoverDevices(userId, deviceIDsToUndiscover)
 }
 
-async function handleBackchannelSyncAlexaState(event) {
+async function handleChangeReport(event) {
   const userId = await lookupUserIdForThing(event.thingId)
 
   if (!userId) {
@@ -236,9 +182,9 @@ async function handleBackchannelSyncAlexaState(event) {
   }
 
   try {
-    return await pushDeviceStateToAlexa(userId, event)
+    return await pushChangeReportToAlexa(userId, event)
   } catch (e) {
-    console.log('pushDeviceStateToAlexa FAILED!', e.message)
+    console.log('pushChangeReportToAlexa FAILED!', e.message)
     return false
   }
 }

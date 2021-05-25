@@ -1,9 +1,9 @@
-name: Deploy sandbox branch
+name: Deploy v2 branch
 
 on:
   push:
     branches:
-      - sandbox
+      - v2
 
 jobs:
   deploy:
