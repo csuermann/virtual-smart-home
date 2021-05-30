@@ -274,7 +274,7 @@ Resources:
               RoleArn:
                 Fn::GetAtt: [myIotRole, Arn]
 
-  syncDeviceState:
+  syncDeviceState: #deprecated?!
     Type: AWS::IoT::TopicRule
     Properties:
       RuleName: syncDeviceState

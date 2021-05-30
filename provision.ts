@@ -190,11 +190,8 @@ app.post('/provision', async function (req, res) {
 })
 
 app.get('/check_version', async function (req, res) {
-  const clientVersion: string | false = (req.query.version as string) || false
-
-  if (!clientVersion) {
-    return res.status(400).send({ error: 'missing query parameter: version' })
-  }
+  const clientVersion: string = (req.body.vsh_version as string) || '0.0.0'
+  const nodeRedVersion: string = (req.body.nr_version as string) || '0.0.0'
 
   const isAllowedVersion = isAllowedClientVersion(clientVersion)
   const isLatestVersion = isLatestClientVersion(clientVersion)

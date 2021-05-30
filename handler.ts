@@ -74,7 +74,7 @@ export const backchannel = async function (event, context) {
   let result
 
   switch (event.rule) {
-    case 'discover':
+    case 'discover': //deprecated
       result = await killDeviceDueToOutdatedVersion(event)
       break
 
@@ -108,7 +108,6 @@ async function killDeviceDueToOutdatedVersion(event) {
 }
 
 async function handleBackchannelBulkDiscover(event) {
-  console.log(event)
   const userId = await lookupUserIdForThing(event.thingId)
   const devicesToDiscover: Device[] = []
 
