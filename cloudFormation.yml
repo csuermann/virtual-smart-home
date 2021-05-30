@@ -1,6 +1,10 @@
+Conditions:
+  CreateBackendResources: !Equals [!Ref 'AWS::Region', 'eu-west-1']
+
 Resources:
   tblDevices:
     Type: AWS::DynamoDB::Table
+    Condition: CreateBackendResources
     Properties:
       TableName: vsh_devices
       AttributeDefinitions:
@@ -43,6 +47,7 @@ Resources:
 
   tblTokens:
     Type: AWS::DynamoDB::Table
+    Condition: CreateBackendResources
     Properties:
       TableName: vsh_tokens
       AttributeDefinitions:
@@ -58,6 +63,7 @@ Resources:
 
   vshPolicy:
     Type: AWS::IoT::Policy
+    Condition: CreateBackendResources
     Properties:
       PolicyName: virtual-smart-home-things
       PolicyDocument:
@@ -166,6 +172,7 @@ Resources:
 
   vshAdminPolicy:
     Type: AWS::IoT::Policy
+    Condition: CreateBackendResources
     Properties:
       PolicyName: vsh-admin
       PolicyDocument:
@@ -177,6 +184,7 @@ Resources:
 
   myIotRole:
     Type: AWS::IAM::Role
+    Condition: CreateBackendResources
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -189,6 +197,7 @@ Resources:
 
   myIotPolicy:
     Type: AWS::IAM::Policy
+    Condition: CreateBackendResources
     Properties:
       PolicyName: my-iot-policy
       PolicyDocument:
@@ -206,6 +215,7 @@ Resources:
 
   LambdaInvokePermission:
     Type: AWS::Lambda::Permission
+    Condition: CreateBackendResources
     Properties:
       FunctionName: { Fn::GetAtt: [BackchannelLambdaFunction, Arn] }
       Action: lambda:InvokeFunction
@@ -213,6 +223,7 @@ Resources:
 
   bulkdiscover:
     Type: AWS::IoT::TopicRule
+    Condition: CreateBackendResources
     Properties:
       RuleName: bulkdiscover
       TopicRulePayload:
@@ -241,6 +252,7 @@ Resources:
 
   bulkundiscover:
     Type: AWS::IoT::TopicRule
+    Condition: CreateBackendResources
     Properties:
       RuleName: bulkundiscover
       TopicRulePayload:
@@ -260,6 +272,7 @@ Resources:
 
   lifecycle:
     Type: AWS::IoT::TopicRule
+    Condition: CreateBackendResources
     Properties:
       RuleName: lifecycle
       TopicRulePayload:
@@ -275,6 +288,7 @@ Resources:
                 Fn::GetAtt: [myIotRole, Arn]
 
   syncDeviceState: #deprecated?!
+    Condition: CreateBackendResources
     Type: AWS::IoT::TopicRule
     Properties:
       RuleName: syncDeviceState
@@ -309,6 +323,7 @@ Resources:
 
   changeReport:
     Type: AWS::IoT::TopicRule
+    Condition: CreateBackendResources
     Properties:
       RuleName: changeReport
       TopicRulePayload:

@@ -48,7 +48,7 @@ functions:
       - us-west-2
     handler: handler.skill
     timeout: 10
-    memorySize: 200 # optional, in MB, default is 1024
+    #memorySize: 200
     maximumRetryAttempts: 0
     events:
       - alexaSmartHome: ${env:SKILL_ID}

@@ -1,0 +1,57 @@
+name: Deploy master branch
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - name: serverless deploy to eu-west-1
+        uses: serverless/github-action@master
+        with:
+          args: deploy
+        env:
+          AWS_DEFAULT_REGION: eu-west-1 # eu-west-1 | us-east-1 | us-west-2
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          IOT_ENDPOINT: ${{ secrets.IOT_ENDPOINT }}
+          SKILL_ID: ${{ secrets.SKILL_ID }}
+          ALEXA_CLIENT_ID: ${{ secrets.ALEXA_CLIENT_ID }}
+          ALEXA_CLIENT_SECRET: ${{ secrets.ALEXA_CLIENT_SECRET }}
+      - name: serverless deploy to us-east-1
+        uses: serverless/github-action@master
+        with:
+          args: deploy
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          IOT_ENDPOINT: ${{ secrets.IOT_ENDPOINT }}
+          SKILL_ID: ${{ secrets.SKILL_ID }}
+          ALEXA_CLIENT_ID: ${{ secrets.ALEXA_CLIENT_ID }}
+          ALEXA_CLIENT_SECRET: ${{ secrets.ALEXA_CLIENT_SECRET }}
+      - name: serverless deploy to us-west-2
+        uses: serverless/github-action@master
+        with:
+          args: deploy
+        env:
+          AWS_DEFAULT_REGION: us-west-2
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          IOT_ENDPOINT: ${{ secrets.IOT_ENDPOINT }}
+          SKILL_ID: ${{ secrets.SKILL_ID }}
+          ALEXA_CLIENT_ID: ${{ secrets.ALEXA_CLIENT_ID }}
+          ALEXA_CLIENT_SECRET: ${{ secrets.ALEXA_CLIENT_SECRET }}
