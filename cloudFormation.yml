@@ -287,39 +287,65 @@ Resources:
               RoleArn:
                 Fn::GetAtt: [myIotRole, Arn]
 
-  syncDeviceState: #deprecated?!
-    Condition: CreateBackendResources
+  killV1Clients:
     Type: AWS::IoT::TopicRule
+    Condition: CreateBackendResources
     Properties:
-      RuleName: syncDeviceState
+      RuleName: killV1Clients
       TopicRulePayload:
         RuleDisabled: false
         AwsIotSqlVersion: '2016-03-23'
         Sql: >
           SELECT
-            'syncDeviceState' as rule,
-            state.desired as state,
-            version,
-            timestamp,
-            topic(3) as thingId,
-            topic(6) as endpointId
+            'kill' AS operation,
+            'outdated VSH version' AS reason
           FROM
-            '$aws/things/+/shadow/name/+/update/accepted'
+            '$aws/things/+/shadow/update/accepted'
           WHERE
-            (
-              CASE isUndefined(state.desired.source)
-                WHEN true
-                THEN false
-                ELSE state.desired.source = "alexa"
-              END
-            ) = true
+            state.reported.connected = true
+            AND
+            regexp_matches(state.reported.vsh_version, "^1(\.\d+){2}$")
         Actions:
           - Republish:
               Topic:
-                Fn::Join: ['', ['vsh/$', '{topic(3)}/$', '{topic(6)}/update']]
+                Fn::Join: ['', ['vsh/$', '{topic(3)}', '/service']]
               Qos: 1
               RoleArn:
                 Fn::GetAtt: [myIotRole, Arn]
+
+  # syncDeviceState: #deprecated!
+  #   Condition: CreateBackendResources
+  #   Type: AWS::IoT::TopicRule
+  #   Properties:
+  #     RuleName: syncDeviceState
+  #     TopicRulePayload:
+  #       RuleDisabled: false
+  #       AwsIotSqlVersion: '2016-03-23'
+  #       Sql: >
+  #         SELECT
+  #           'syncDeviceState' as rule,
+  #           state.desired as state,
+  #           version,
+  #           timestamp,
+  #           topic(3) as thingId,
+  #           topic(6) as endpointId
+  #         FROM
+  #           '$aws/things/+/shadow/name/+/update/accepted'
+  #         WHERE
+  #           (
+  #             CASE isUndefined(state.desired.source)
+  #               WHEN true
+  #               THEN false
+  #               ELSE state.desired.source = "alexa"
+  #             END
+  #           ) = true
+  #       Actions:
+  #         - Republish:
+  #             Topic:
+  #               Fn::Join: ['', ['vsh/$', '{topic(3)}/$', '{topic(6)}/update']]
+  #             Qos: 1
+  #             RoleArn:
+  #               Fn::GetAtt: [myIotRole, Arn]
 
   changeReport:
     Type: AWS::IoT::TopicRule
