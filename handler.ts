@@ -7,6 +7,7 @@ import {
   proactivelyDiscoverDevices,
   proactivelyUndiscoverDevices,
   pushChangeReportToAlexa,
+  pushAsyncResponseToAlexa,
 } from './helper'
 import handleDiscover from './handlers/discover'
 import handleAcceptGrant from './handlers/acceptGrant'
@@ -180,11 +181,20 @@ async function handleChangeReport(event) {
     return false
   }
 
-  try {
-    return await pushChangeReportToAlexa(userId, event)
-  } catch (e) {
-    console.log('pushChangeReportToAlexa FAILED!', e.message)
-    return false
+  if (event.causeType === 'VOICE_INTERACTION' && event.correlationToken) {
+    try {
+      return await pushAsyncResponseToAlexa(userId, event)
+    } catch (e) {
+      console.log('pushAsyncResponseToAlexa FAILED!', e.message)
+      return false
+    }
+  } else {
+    try {
+      return await pushChangeReportToAlexa(userId, event)
+    } catch (e) {
+      console.log('pushChangeReportToAlexa FAILED!', e.message)
+      return false
+    }
   }
 }
 

@@ -160,6 +160,71 @@ export async function pushChangeReportToAlexa(userId: string, event) {
   return response.status == 202
 }
 
+/**
+ * https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#asynchronous
+ */
+export async function pushAsyncResponseToAlexa(userId: string, event) {
+  const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
+
+  let { endpointId, properties, correlationToken } = event
+
+  properties = (properties as []).map((prop: Object) => ({
+    ...prop,
+    timeOfSample: new Date().toISOString(),
+    uncertaintyInMilliseconds: 500,
+  }))
+
+  const alexaResponse = {
+    event: {
+      header: {
+        namespace: 'Alexa',
+        name: 'Response',
+        messageId: uuidv4(),
+        correlationToken,
+        payloadVersion: '3',
+      },
+      endpoint: {
+        scope: {
+          type: 'BearerToken',
+          token: accessToken,
+        },
+        endpointId,
+      },
+      payload: {},
+    },
+    context: {
+      properties: properties.map((prop) => {
+        delete prop.changed
+        return prop
+      }),
+    },
+  }
+
+  alexaResponse.context.properties.push({
+    namespace: 'Alexa.EndpointHealth',
+    name: 'connectivity',
+    value: {
+      value: 'OK',
+    },
+    timeOfSample: new Date().toISOString(),
+    uncertaintyInMilliseconds: 250,
+  })
+
+  console.log('ASYNC DIRECTIVE RESPONSE', JSON.stringify(alexaResponse))
+
+  const response: AxiosResponse = await Axios.post(
+    getEventGatewayUrl(skillRegion),
+    alexaResponse,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  )
+
+  return response.status == 202
+}
+
 export async function proactivelyDiscoverDevices(
   userId: string,
   devices: Device[]

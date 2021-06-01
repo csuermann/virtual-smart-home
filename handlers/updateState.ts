@@ -233,12 +233,21 @@ export async function handleDirective(event: DirectiveEvent) {
     )
   }
 
-  /**
-   * Build the most simple synchronous response possible, which only confirms the single property that was directly manipulated by the directive.
-   * Any other properties that might also change will be sent to Alexa by the VSH client as a ChangeReport
-   **/
-  const updatedProperties = directiveResolvers[directiveName](event)
-  const simpleResponse = makeResponse(event, updatedProperties)
+  // https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#deferred
+  const deferredResponse = {
+    event: {
+      header: {
+        namespace: 'Alexa',
+        name: 'DeferredResponse',
+        messageId: event.directive.header.messageId + '-R',
+        correlationToken: event.directive.header.correlationToken,
+        payloadVersion: '3',
+      },
+      payload: {
+        estimatedDeferralInSeconds: 5,
+      },
+    },
+  }
 
   const directiveStub = { ...event }
 
@@ -246,7 +255,6 @@ export async function handleDirective(event: DirectiveEvent) {
   delete directiveStub.profile
   delete directiveStub.directive.header.messageId
   delete directiveStub.directive.header.payloadVersion
-  delete directiveStub.directive.header.correlationToken
   delete directiveStub.directive.endpoint.scope
   delete directiveStub.directive.endpoint.cookie
 
@@ -255,5 +263,5 @@ export async function handleDirective(event: DirectiveEvent) {
     directiveStub
   )
 
-  return simpleResponse
+  return deferredResponse
 }
