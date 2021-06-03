@@ -2,64 +2,87 @@ Conditions:
   CreateBackendResources: !Equals [!Ref 'AWS::Region', 'eu-west-1']
 
 Resources:
-  tblDevices:
+  vshTable:
     Type: AWS::DynamoDB::Table
     Condition: CreateBackendResources
     Properties:
-      TableName: vsh_devices
+      TableName: VSH
       AttributeDefinitions:
-        - AttributeName: deviceId
+        - AttributeName: PK
           AttributeType: S
-        - AttributeName: thingId
-          AttributeType: S
-        - AttributeName: userId
+        - AttributeName: SK
           AttributeType: S
       BillingMode: PROVISIONED
-      GlobalSecondaryIndexes:
-        - IndexName: userId-index
-          KeySchema:
-            - AttributeName: userId
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
-        - IndexName: thingId-index
-          KeySchema:
-            - AttributeName: thingId
-              KeyType: HASH
-            - AttributeName: deviceId
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
       KeySchema:
-        - AttributeName: deviceId
+        - AttributeName: PK
           KeyType: HASH
-        - AttributeName: userId
+        - AttributeName: SK
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
+      TimeToLiveSpecification:
+        AttributeName: deleteAtUnixTime
+        Enabled: true
 
-  tblTokens:
-    Type: AWS::DynamoDB::Table
-    Condition: CreateBackendResources
-    Properties:
-      TableName: vsh_tokens
-      AttributeDefinitions:
-        - AttributeName: userId
-          AttributeType: S
-      BillingMode: PROVISIONED
-      KeySchema:
-        - AttributeName: userId
-          KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+  # tblDevices:
+  #   Type: AWS::DynamoDB::Table
+  #   Condition: CreateBackendResources
+  #   Properties:
+  #     TableName: vsh_devices
+  #     AttributeDefinitions:
+  #       - AttributeName: deviceId
+  #         AttributeType: S
+  #       - AttributeName: thingId
+  #         AttributeType: S
+  #       - AttributeName: userId
+  #         AttributeType: S
+  #     BillingMode: PROVISIONED
+  #     GlobalSecondaryIndexes:
+  #       - IndexName: userId-index
+  #         KeySchema:
+  #           - AttributeName: userId
+  #             KeyType: HASH
+  #         Projection:
+  #           ProjectionType: ALL
+  #         ProvisionedThroughput:
+  #           ReadCapacityUnits: 5
+  #           WriteCapacityUnits: 5
+  #       - IndexName: thingId-index
+  #         KeySchema:
+  #           - AttributeName: thingId
+  #             KeyType: HASH
+  #           - AttributeName: deviceId
+  #             KeyType: RANGE
+  #         Projection:
+  #           ProjectionType: ALL
+  #         ProvisionedThroughput:
+  #           ReadCapacityUnits: 5
+  #           WriteCapacityUnits: 5
+  #     KeySchema:
+  #       - AttributeName: deviceId
+  #         KeyType: HASH
+  #       - AttributeName: userId
+  #         KeyType: RANGE
+  #     ProvisionedThroughput:
+  #       ReadCapacityUnits: 5
+  #       WriteCapacityUnits: 5
+
+  # tblTokens:
+  #   Type: AWS::DynamoDB::Table
+  #   Condition: CreateBackendResources
+  #   Properties:
+  #     TableName: vsh_tokens
+  #     AttributeDefinitions:
+  #       - AttributeName: userId
+  #         AttributeType: S
+  #     BillingMode: PROVISIONED
+  #     KeySchema:
+  #       - AttributeName: userId
+  #         KeyType: HASH
+  #     ProvisionedThroughput:
+  #       ReadCapacityUnits: 5
+  #       WriteCapacityUnits: 5
 
   vshClientPolicy:
     Type: AWS::IoT::Policy

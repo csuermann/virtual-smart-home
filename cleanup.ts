@@ -126,10 +126,29 @@ async function deleteThing(thingName) {
   })
 }
 
+async function describeThing(thingName) {
+  const params = {
+    thingName,
+  }
+
+  return new Promise((resolve, reject) => {
+    iot.describeThing(params, function (err, data) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(data)
+      }
+    })
+  })
+}
+
 async function totallyCleanUpThing(thingName) {
   console.log('totallyCleanUpThing::', thingName)
 
-  const devices = await getDevicesOfThing(thingName)
+  const data: any = await describeThing(thingName)
+  const { userId } = data.attributes
+
+  const devices = await getDevicesOfThing(userId, thingName)
   console.log('devices::', devices.length)
 
   if (devices.length > 0) {

@@ -28,7 +28,7 @@ provider:
       Action:
         - dynamodb:*
       Resource:
-        - !Sub arn:aws:dynamodb:${self:provider.environment.VSH_IOT_REGION}:${AWS::AccountId}:table/vsh_*
+        - !Sub arn:aws:dynamodb:${self:provider.environment.VSH_IOT_REGION}:${AWS::AccountId}:table/VSH
     - Effect: Allow
       Action:
         - cloudwatch:PutMetricData

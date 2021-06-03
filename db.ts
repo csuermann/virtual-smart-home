@@ -14,12 +14,13 @@ export function upsertTokens(
   expiryInSec
 ): Promise<any> {
   let UpdateExpression =
-    'set updatedAt = :c, accessTokenExpiry = :e, accessToken = :a, refreshToken = :r'
+    'set updatedAt = :c, accessTokenExpiry = :e, accessToken = :a, refreshToken = :r, deleteAtUnixTime = :ttl'
   let ExpressionAttributeValues = {
     ':c': dayjs().toISOString(),
     ':e': dayjs().add(expiryInSec, 'second').toISOString(),
     ':a': accessToken,
     ':r': refreshToken,
+    ':ttl': dayjs().add(60, 'day').unix(),
   }
 
   if (email) {
@@ -33,9 +34,10 @@ export function upsertTokens(
   }
 
   let params = {
-    TableName: 'vsh_tokens',
+    TableName: 'VSH',
     Key: {
-      userId: userId,
+      PK: `USER#${userId}`,
+      SK: 'TOKEN',
     },
     UpdateExpression,
     ExpressionAttributeValues,
@@ -56,8 +58,11 @@ export async function getStoredTokenRecord(
   userId: string
 ): Promise<TokenRecord> {
   let params = {
-    TableName: 'vsh_tokens',
-    Key: { userId: userId },
+    TableName: 'VSH',
+    Key: {
+      PK: `USER#${userId}`,
+      SK: 'TOKEN',
+    },
   }
 
   let data: any = await new Promise((resolve, reject) => {
@@ -103,17 +108,18 @@ export function upsertDevice({
   thingId,
 }): Promise<any> {
   let params = {
-    TableName: 'vsh_devices',
+    TableName: 'VSH',
     Key: {
-      deviceId: deviceId,
-      userId: userId,
+      PK: `USER#${userId}`,
+      SK: `THING#${thingId}#DEVICE#${deviceId}`,
     },
     UpdateExpression:
-      'set friendlyName = :fn, template = :te, thingId = :th, updatedAt = :ua',
+      'set friendlyName = :fn, template = :te, thingId = :th, deviceId = :de, updatedAt = :ua',
     ExpressionAttributeValues: {
       ':fn': friendlyName,
       ':te': template,
       ':th': thingId,
+      ':de': deviceId,
       ':ua': dayjs().toISOString(),
     },
   }
@@ -131,10 +137,10 @@ export function upsertDevice({
 
 export function deleteDevice({ userId, deviceId, thingId }): Promise<any> {
   let params = {
-    TableName: 'vsh_devices',
+    TableName: 'VSH',
     Key: {
-      deviceId: deviceId,
-      userId: userId,
+      PK: `USER#${userId}`,
+      SK: `THING#${thingId}#DEVICE#${deviceId}`,
     },
     ConditionExpression: 'thingId = :th',
     ExpressionAttributeValues: {
@@ -156,11 +162,11 @@ export function deleteDevice({ userId, deviceId, thingId }): Promise<any> {
 
 export async function getDevicesOfUser(userId: string): Promise<Device[]> {
   let params = {
-    TableName: 'vsh_devices',
-    IndexName: 'userId-index',
-    KeyConditionExpression: 'userId = :i',
+    TableName: 'VSH',
+    KeyConditionExpression: 'PK = :pk and begins_with(SK, :sk)',
     ExpressionAttributeValues: {
-      ':i': userId,
+      ':pk': `USER#${userId}`,
+      ':sk': 'THING',
     },
   }
 
@@ -177,13 +183,16 @@ export async function getDevicesOfUser(userId: string): Promise<Device[]> {
   return devices as Device[]
 }
 
-export async function getDevicesOfThing(thingId: string): Promise<Device[]> {
+export async function getDevicesOfThing(
+  userId: string,
+  thingId: string
+): Promise<Device[]> {
   let params = {
-    TableName: 'vsh_devices',
-    IndexName: 'thingId-index',
-    KeyConditionExpression: 'thingId = :i',
+    TableName: 'VSH',
+    KeyConditionExpression: 'PK = :pk and begins_with(SK, :sk)',
     ExpressionAttributeValues: {
-      ':i': thingId,
+      ':pk': `USER#${userId}`,
+      ':sk': `THING#${thingId}`,
     },
   }
 
