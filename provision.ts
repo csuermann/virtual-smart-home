@@ -70,7 +70,7 @@ async function attachPremadePolicyToCertificate(
   certificateArn: string
 ): Promise<any> {
   const params = {
-    policyName: 'virtual-smart-home-things',
+    policyName: 'vshClientPolicy',
     principal: certificateArn,
   }
 

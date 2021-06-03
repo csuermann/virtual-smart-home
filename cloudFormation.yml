@@ -61,11 +61,11 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
 
-  vshPolicy:
+  vshClientPolicy:
     Type: AWS::IoT::Policy
     Condition: CreateBackendResources
     Properties:
-      PolicyName: virtual-smart-home-things
+      PolicyName: vshClientPolicy
       PolicyDocument:
         Version: '2012-10-17'
         Statement:

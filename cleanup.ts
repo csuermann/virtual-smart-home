@@ -44,7 +44,7 @@ async function getThingPrincipal(thingName) {
 
 async function detachPolicy(principalArn) {
   const params = {
-    policyName: 'virtual-smart-home-things',
+    policyName: 'vshClientPolicy',
     target: principalArn,
   }
 
@@ -144,7 +144,7 @@ async function totallyCleanUpThing(thingName) {
   const principalArn = await getThingPrincipal(thingName)
   console.log('principalArn::', principalArn)
 
-  console.log('detaching virtual-smart-home-things policy from certificate...')
+  console.log('detaching vshClientPolicy from certificate...')
   await detachPolicy(principalArn)
 
   console.log('updating certificate to INACTIVE...')
