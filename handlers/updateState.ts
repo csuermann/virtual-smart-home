@@ -206,7 +206,7 @@ const directiveResolvers: ResolverHashmap = {
 }
 
 export async function handleDirective(event: DirectiveEvent) {
-  const { thingId } = event.directive.endpoint.cookie
+  const { thingId, template } = event.directive.endpoint.cookie
   const directiveName = event.directive.header.name
 
   const thingShadow = (await fetchThingShadow(thingId)) as Shadow
@@ -233,20 +233,49 @@ export async function handleDirective(event: DirectiveEvent) {
     )
   }
 
-  // https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#deferred
-  const deferredResponse = {
-    event: {
-      header: {
-        namespace: 'Alexa',
-        name: 'DeferredResponse',
-        messageId: event.directive.header.messageId + '-R',
-        correlationToken: event.directive.header.correlationToken,
-        payloadVersion: '3',
+  let immediateResponse
+
+  if (template === 'SCENE') {
+    immediateResponse = {
+      context: {},
+      event: {
+        header: {
+          messageId: event.directive.header.messageId + '-R',
+          correlationToken: event.directive.header.correlationToken,
+          namespace: 'Alexa.SceneController',
+          name:
+            directiveName === 'Activate'
+              ? 'ActivationStarted'
+              : 'DeactivationStarted',
+          payloadVersion: '3',
+        },
+        endpoint: {
+          endpointId: event.directive.endpoint.endpointId,
+        },
+        payload: {
+          cause: {
+            type: 'VOICE_INTERACTION',
+          },
+          timestamp: new Date().toISOString(),
+        },
       },
-      payload: {
-        estimatedDeferralInSeconds: 5,
+    }
+  } else {
+    // https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#deferred
+    immediateResponse = {
+      event: {
+        header: {
+          namespace: 'Alexa',
+          name: 'DeferredResponse',
+          messageId: event.directive.header.messageId + '-R',
+          correlationToken: event.directive.header.correlationToken,
+          payloadVersion: '3',
+        },
+        payload: {
+          estimatedDeferralInSeconds: 5,
+        },
       },
-    },
+    }
   }
 
   const directiveStub = { ...event }
@@ -263,5 +292,5 @@ export async function handleDirective(event: DirectiveEvent) {
     directiveStub
   )
 
-  return deferredResponse
+  return immediateResponse
 }

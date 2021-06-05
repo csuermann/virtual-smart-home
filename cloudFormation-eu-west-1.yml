@@ -1,10 +1,6 @@
-Conditions:
-  CreateBackendResources: !Equals [!Ref 'AWS::Region', 'eu-west-1']
-
 Resources:
   vshTable:
     Type: AWS::DynamoDB::Table
-    Condition: CreateBackendResources
     Properties:
       TableName: VSH
       AttributeDefinitions:
@@ -27,7 +23,6 @@ Resources:
 
   vshClientPolicy:
     Type: AWS::IoT::Policy
-    Condition: CreateBackendResources
     Properties:
       PolicyName: vshClientPolicy
       PolicyDocument:
@@ -136,7 +131,6 @@ Resources:
 
   vshAdminPolicy:
     Type: AWS::IoT::Policy
-    Condition: CreateBackendResources
     Properties:
       PolicyName: vshAdmin
       PolicyDocument:
@@ -148,7 +142,6 @@ Resources:
 
   myIotRole:
     Type: AWS::IAM::Role
-    Condition: CreateBackendResources
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -161,7 +154,6 @@ Resources:
 
   myIotPolicy:
     Type: AWS::IAM::Policy
-    Condition: CreateBackendResources
     Properties:
       PolicyName: my-iot-policy
       PolicyDocument:
@@ -189,7 +181,6 @@ Resources:
     Type: AWS::IoT::TopicRule
     DependsOn: BackchannelLambdaFunction
     Properties:
-      #RuleName: bulkdiscover
       TopicRulePayload:
         RuleDisabled: false
         AwsIotSqlVersion: '2016-03-23'
@@ -218,7 +209,6 @@ Resources:
     Type: AWS::IoT::TopicRule
     DependsOn: BackchannelLambdaFunction
     Properties:
-      #RuleName: bulkundiscover
       TopicRulePayload:
         RuleDisabled: false
         AwsIotSqlVersion: '2016-03-23'
@@ -236,9 +226,7 @@ Resources:
 
   LastWillAndTestament:
     Type: AWS::IoT::TopicRule
-    Condition: CreateBackendResources
     Properties:
-      #RuleName: LastWillAndTestament
       TopicRulePayload:
         RuleDisabled: false
         AwsIotSqlVersion: '2016-03-23'
@@ -253,7 +241,6 @@ Resources:
 
   killV1Clients:
     Type: AWS::IoT::TopicRule
-    Condition: CreateBackendResources
     Properties:
       RuleName: killV1Clients
       TopicRulePayload:
