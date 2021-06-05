@@ -25,65 +25,6 @@ Resources:
         AttributeName: deleteAtUnixTime
         Enabled: true
 
-  # tblDevices:
-  #   Type: AWS::DynamoDB::Table
-  #   Condition: CreateBackendResources
-  #   Properties:
-  #     TableName: vsh_devices
-  #     AttributeDefinitions:
-  #       - AttributeName: deviceId
-  #         AttributeType: S
-  #       - AttributeName: thingId
-  #         AttributeType: S
-  #       - AttributeName: userId
-  #         AttributeType: S
-  #     BillingMode: PROVISIONED
-  #     GlobalSecondaryIndexes:
-  #       - IndexName: userId-index
-  #         KeySchema:
-  #           - AttributeName: userId
-  #             KeyType: HASH
-  #         Projection:
-  #           ProjectionType: ALL
-  #         ProvisionedThroughput:
-  #           ReadCapacityUnits: 5
-  #           WriteCapacityUnits: 5
-  #       - IndexName: thingId-index
-  #         KeySchema:
-  #           - AttributeName: thingId
-  #             KeyType: HASH
-  #           - AttributeName: deviceId
-  #             KeyType: RANGE
-  #         Projection:
-  #           ProjectionType: ALL
-  #         ProvisionedThroughput:
-  #           ReadCapacityUnits: 5
-  #           WriteCapacityUnits: 5
-  #     KeySchema:
-  #       - AttributeName: deviceId
-  #         KeyType: HASH
-  #       - AttributeName: userId
-  #         KeyType: RANGE
-  #     ProvisionedThroughput:
-  #       ReadCapacityUnits: 5
-  #       WriteCapacityUnits: 5
-
-  # tblTokens:
-  #   Type: AWS::DynamoDB::Table
-  #   Condition: CreateBackendResources
-  #   Properties:
-  #     TableName: vsh_tokens
-  #     AttributeDefinitions:
-  #       - AttributeName: userId
-  #         AttributeType: S
-  #     BillingMode: PROVISIONED
-  #     KeySchema:
-  #       - AttributeName: userId
-  #         KeyType: HASH
-  #     ProvisionedThroughput:
-  #       ReadCapacityUnits: 5
-  #       WriteCapacityUnits: 5
-
   vshClientPolicy:
     Type: AWS::IoT::Policy
     Condition: CreateBackendResources
@@ -248,7 +189,7 @@ Resources:
     Type: AWS::IoT::TopicRule
     Condition: CreateBackendResources
     Properties:
-      RuleName: bulkdiscover
+      #RuleName: bulkdiscover
       TopicRulePayload:
         RuleDisabled: false
         AwsIotSqlVersion: '2016-03-23'
@@ -277,7 +218,7 @@ Resources:
     Type: AWS::IoT::TopicRule
     Condition: CreateBackendResources
     Properties:
-      RuleName: bulkundiscover
+      #RuleName: bulkundiscover
       TopicRulePayload:
         RuleDisabled: false
         AwsIotSqlVersion: '2016-03-23'
@@ -293,11 +234,11 @@ Resources:
               FunctionArn:
                 Fn::GetAtt: [BackchannelLambdaFunction, Arn]
 
-  lifecycle:
+  LastWillAndTestament:
     Type: AWS::IoT::TopicRule
     Condition: CreateBackendResources
     Properties:
-      RuleName: lifecycle
+      #RuleName: LastWillAndTestament
       TopicRulePayload:
         RuleDisabled: false
         AwsIotSqlVersion: '2016-03-23'
@@ -335,40 +276,6 @@ Resources:
               Qos: 1
               RoleArn:
                 Fn::GetAtt: [myIotRole, Arn]
-
-  # syncDeviceState: #deprecated!
-  #   Condition: CreateBackendResources
-  #   Type: AWS::IoT::TopicRule
-  #   Properties:
-  #     RuleName: syncDeviceState
-  #     TopicRulePayload:
-  #       RuleDisabled: false
-  #       AwsIotSqlVersion: '2016-03-23'
-  #       Sql: >
-  #         SELECT
-  #           'syncDeviceState' as rule,
-  #           state.desired as state,
-  #           version,
-  #           timestamp,
-  #           topic(3) as thingId,
-  #           topic(6) as endpointId
-  #         FROM
-  #           '$aws/things/+/shadow/name/+/update/accepted'
-  #         WHERE
-  #           (
-  #             CASE isUndefined(state.desired.source)
-  #               WHEN true
-  #               THEN false
-  #               ELSE state.desired.source = "alexa"
-  #             END
-  #           ) = true
-  #       Actions:
-  #         - Republish:
-  #             Topic:
-  #               Fn::Join: ['', ['vsh/$', '{topic(3)}/$', '{topic(6)}/update']]
-  #             Qos: 1
-  #             RoleArn:
-  #               Fn::GetAtt: [myIotRole, Arn]
 
   changeReport:
     Type: AWS::IoT::TopicRule

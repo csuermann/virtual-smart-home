@@ -163,12 +163,6 @@ export async function handleBackchannelBulkUndiscover({ thingId, devices }) {
       deviceId: device.deviceId,
       thingId: device.thingId,
     })
-
-    //::TODO:: delete this in an upcoming version (once <2.0.0 is no longer in use)
-    await publish(
-      `$aws/things/${device.thingId}/shadow/name/${device.deviceId}/delete`,
-      {}
-    )
   }
 
   await proactivelyUndiscoverDevices(userId, deviceIDsToUndiscover)
