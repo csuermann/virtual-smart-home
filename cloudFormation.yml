@@ -179,7 +179,7 @@ Resources:
 
   LambdaInvokePermission:
     Type: AWS::Lambda::Permission
-    Condition: CreateBackendResources
+    DependsOn: BackchannelLambdaFunction
     Properties:
       FunctionName: { Fn::GetAtt: [BackchannelLambdaFunction, Arn] }
       Action: lambda:InvokeFunction
@@ -187,7 +187,7 @@ Resources:
 
   bulkdiscover:
     Type: AWS::IoT::TopicRule
-    Condition: CreateBackendResources
+    DependsOn: BackchannelLambdaFunction
     Properties:
       #RuleName: bulkdiscover
       TopicRulePayload:
@@ -216,7 +216,7 @@ Resources:
 
   bulkundiscover:
     Type: AWS::IoT::TopicRule
-    Condition: CreateBackendResources
+    DependsOn: BackchannelLambdaFunction
     Properties:
       #RuleName: bulkundiscover
       TopicRulePayload:
@@ -279,7 +279,7 @@ Resources:
 
   changeReport:
     Type: AWS::IoT::TopicRule
-    Condition: CreateBackendResources
+    DependsOn: BackchannelLambdaFunction
     Properties:
       RuleName: changeReport
       TopicRulePayload:

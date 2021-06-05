@@ -54,11 +54,13 @@ functions:
       - alexaSmartHome: ${env:SKILL_ID}
 
   backchannel:
+    #condition: CreateBackendResources
     regions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: handler.backchannel
 
   cleanup:
+    #condition: CreateBackendResources
     regions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: cleanup.cleanup
@@ -68,6 +70,7 @@ functions:
       - schedule: cron(0 3 * * ? *)
 
   metrics:
+    #condition: CreateBackendResources
     regions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: metrics.metrics
@@ -77,6 +80,7 @@ functions:
       - schedule: cron(0/15 * * * ? *)
 
   provision:
+    #condition: CreateBackendResources
     regions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: provision.provision
@@ -99,4 +103,4 @@ functions:
           method: get
           cors: true
 
-resources: ${file(cloudFormation.yml)}
+resources: ${file(cloudFormation-${opt:region}.yml)}
