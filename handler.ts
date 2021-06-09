@@ -165,7 +165,7 @@ export async function handleBackchannelBulkUndiscover({ thingId, devices }) {
     })
   }
 
-  await proactivelyUndiscoverDevices(userId, deviceIDsToUndiscover)
+  return await proactivelyUndiscoverDevices(userId, deviceIDsToUndiscover)
 }
 
 async function handleChangeReport(event) {

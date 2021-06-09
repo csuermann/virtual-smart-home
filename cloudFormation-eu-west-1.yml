@@ -41,6 +41,9 @@ Resources:
                       '{iot:Connection.Thing.ThingName}',
                     ],
                   ]
+            # Condition:
+            #   Bool:
+            #     iot:Connection.Thing.IsAttached: 'true'
           - Effect: Allow
             Action:
               - iot:Publish

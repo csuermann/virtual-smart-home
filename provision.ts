@@ -203,6 +203,7 @@ app.get('/check_version', async function (req, res) {
     isAllowedVersion,
     isLatestVersion,
     updateHint,
+    allowedDeviceCount: 100,
   })
 })
 
