@@ -21,10 +21,9 @@ Resources:
         AttributeName: deleteAtUnixTime
         Enabled: true
 
-  vshClientPolicy:
+  vshClientPolicy2:
     Type: AWS::IoT::Policy
     Properties:
-      PolicyName: vshClientPolicy
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -41,9 +40,9 @@ Resources:
                       '{iot:Connection.Thing.ThingName}',
                     ],
                   ]
-            # Condition:
-            #   Bool:
-            #     iot:Connection.Thing.IsAttached: 'true'
+            Condition:
+              Bool:
+                iot:Connection.Thing.IsAttached: 'true'
           - Effect: Allow
             Action:
               - iot:Publish

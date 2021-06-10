@@ -44,7 +44,7 @@ async function getThingPrincipal(thingName) {
 
 async function detachPolicy(principalArn) {
   const params = {
-    policyName: 'vshClientPolicy',
+    policyName: process.env.VSH_IOT_POLICY,
     target: principalArn,
   }
 
@@ -163,7 +163,7 @@ async function totallyCleanUpThing(thingName) {
   const principalArn = await getThingPrincipal(thingName)
   console.log('principalArn::', principalArn)
 
-  console.log('detaching vshClientPolicy from certificate...')
+  console.log(`detaching ${process.env.VSH_IOT_POLICY} from certificate...`)
   await detachPolicy(principalArn)
 
   console.log('updating certificate to INACTIVE...')

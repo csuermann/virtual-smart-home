@@ -70,7 +70,7 @@ async function attachPremadePolicyToCertificate(
   certificateArn: string
 ): Promise<any> {
   const params = {
-    policyName: 'vshClientPolicy',
+    policyName: process.env.VSH_IOT_POLICY,
     principal: certificateArn,
   }
 

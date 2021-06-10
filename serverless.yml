@@ -64,6 +64,9 @@ functions:
     handler: cleanup.cleanup
     timeout: 300
     maximumRetryAttempts: 0
+    environment:
+      VSH_IOT_POLICY:
+        Ref: 'vshClientPolicy2'
     events:
       - schedule: cron(0 3 * * ? *)
 
@@ -81,6 +84,9 @@ functions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: provision.provision
     maximumRetryAttempts: 0
+    environment:
+      VSH_IOT_POLICY:
+        Ref: 'vshClientPolicy2'
     events:
       - http:
           path: provision
