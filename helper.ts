@@ -11,6 +11,28 @@ AWS.config.update({ region: process.env.VSH_IOT_REGION })
 
 const iot = new AWS.Iot()
 
+export enum CauseType {
+  PHYSICAL_INTERACTION = 'PHYSICAL_INTERACTION',
+  VOICE_INTERACTION = 'VOICE_INTERACTION',
+  STATE_REPORT = 'STATE_REPORT',
+}
+
+export type VshClientBackchannelEvent = {
+  rule: string
+  thingId: string
+  endpointId: string
+  properties: [
+    {
+      namespace: string
+      name: string
+      value: any
+      changed: boolean
+    }
+  ]
+  correlationToken?: string
+  causeType: CauseType
+}
+
 function getEventGatewayUrl(region) {
   switch (region.toLowerCase()) {
     case 'eu-west-1':
@@ -82,12 +104,15 @@ export function createErrorResponse(
 /**
  * https://developer.amazon.com/en-US/docs/alexa/smarthome/state-reporting-for-a-smart-home-skill.html#report-state-with-changereport-events
  */
-export async function pushChangeReportToAlexa(userId: string, event) {
+export async function pushChangeReportToAlexa(
+  userId: string,
+  event: VshClientBackchannelEvent
+) {
   const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
 
   let { endpointId, properties, causeType } = event
 
-  properties = (properties as []).map((prop: Object) => ({
+  let alexaProps: Array<any> = properties.map((prop) => ({
     ...prop,
     timeOfSample: new Date().toISOString(),
     uncertaintyInMilliseconds: 500,
@@ -115,7 +140,7 @@ export async function pushChangeReportToAlexa(userId: string, event) {
             type: causeType,
           },
           //only the properties that changed
-          properties: properties
+          properties: alexaProps
             .filter((prop) => prop.changed === true)
             .map((prop) => {
               delete prop.changed
@@ -126,7 +151,7 @@ export async function pushChangeReportToAlexa(userId: string, event) {
     },
     context: {
       //all other attributes that did not change
-      properties: properties
+      properties: alexaProps
         .filter((prop) => prop.changed === false)
         .map((prop) => {
           delete prop.changed
@@ -163,12 +188,15 @@ export async function pushChangeReportToAlexa(userId: string, event) {
 /**
  * https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#asynchronous
  */
-export async function pushAsyncResponseToAlexa(userId: string, event) {
+export async function pushAsyncResponseToAlexa(
+  userId: string,
+  event: VshClientBackchannelEvent
+) {
   const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
 
   let { endpointId, properties, correlationToken } = event
 
-  properties = (properties as []).map((prop: Object) => ({
+  let alexaProps: Array<any> = properties.map((prop) => ({
     ...prop,
     timeOfSample: new Date().toISOString(),
     uncertaintyInMilliseconds: 500,
@@ -193,7 +221,7 @@ export async function pushAsyncResponseToAlexa(userId: string, event) {
       payload: {},
     },
     context: {
-      properties: properties.map((prop) => {
+      properties: alexaProps.map((prop) => {
         delete prop.changed
         return prop
       }),
@@ -211,6 +239,71 @@ export async function pushAsyncResponseToAlexa(userId: string, event) {
   })
 
   console.log('ASYNC DIRECTIVE RESPONSE', JSON.stringify(alexaResponse))
+
+  const response: AxiosResponse = await Axios.post(
+    getEventGatewayUrl(skillRegion),
+    alexaResponse,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  )
+
+  return response.status == 202
+}
+
+export async function pushAsyncStateReportToAlexa(
+  userId: string,
+  event: VshClientBackchannelEvent
+) {
+  const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
+
+  let { endpointId, properties, correlationToken } = event
+
+  let alexaProps: Array<any> = properties.map((prop) => ({
+    ...prop,
+    timeOfSample: new Date().toISOString(),
+    uncertaintyInMilliseconds: 500,
+  }))
+
+  const alexaResponse = {
+    event: {
+      header: {
+        namespace: 'Alexa',
+        name: 'StateReport',
+        messageId: uuidv4(),
+        correlationToken,
+        payloadVersion: '3',
+      },
+      endpoint: {
+        scope: {
+          type: 'BearerToken',
+          token: accessToken,
+        },
+        endpointId,
+      },
+      payload: {},
+    },
+    context: {
+      properties: alexaProps.map((prop) => {
+        delete prop.changed
+        return prop
+      }),
+    },
+  }
+
+  alexaResponse.context.properties.push({
+    namespace: 'Alexa.EndpointHealth',
+    name: 'connectivity',
+    value: {
+      value: 'OK',
+    },
+    timeOfSample: new Date().toISOString(),
+    uncertaintyInMilliseconds: 250,
+  })
+
+  console.log('ASYNC STATE REPORT', JSON.stringify(alexaResponse))
 
   const response: AxiosResponse = await Axios.post(
     getEventGatewayUrl(skillRegion),

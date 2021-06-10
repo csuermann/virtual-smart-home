@@ -1,7 +1,7 @@
 import { createErrorResponse } from '../helper'
 import { publish } from '../mqtt'
 import { Shadow, fetchThingShadow } from '../shadow'
-import { isAllowedClientVersion } from '../version'
+import { isAllowedClientVersion, isFeatureSupportedByClient } from '../version'
 
 interface Property {
   namespace: string
@@ -36,69 +36,6 @@ function makeProperty(
     timeOfSample: new Date().toISOString(),
     uncertaintyInMilliseconds: 0,
   }
-}
-
-function makeResponse(event, updatedProperties) {
-  const directiveName = event.directive.header.name
-  let result
-
-  if (directiveName === 'Activate' || directiveName === 'Deactivate') {
-    //scene activated or deactivated
-    result = {
-      context: {},
-      event: {
-        header: {
-          messageId: event.directive.header.messageId + '-R',
-          correlationToken: event.directive.header.correlationToken,
-          namespace: 'Alexa.SceneController',
-          name:
-            directiveName === 'Activate'
-              ? 'ActivationStarted'
-              : 'DeactivationStarted',
-          payloadVersion: '3',
-        },
-        endpoint: {
-          scope: {
-            type: 'BearerToken',
-            token: event.directive.endpoint.scope.token,
-          },
-          endpointId: event.directive.endpoint.endpointId,
-        },
-        payload: {
-          cause: {
-            type: 'VOICE_INTERACTION',
-          },
-          timestamp: new Date().toISOString(),
-        },
-      },
-    }
-  } else {
-    //response to device directive
-    result = {
-      event: {
-        header: {
-          namespace: 'Alexa',
-          name: 'Response',
-          messageId: event.directive.header.messageId + '-R',
-          correlationToken: event.directive.header.correlationToken,
-          payloadVersion: '3',
-        },
-        endpoint: {
-          scope: {
-            type: 'BearerToken',
-            token: event.directive.endpoint.scope.token,
-          },
-          endpointId: event.directive.endpoint.endpointId,
-        },
-        payload: {},
-      },
-      context: {
-        properties: updatedProperties,
-      },
-    }
-  }
-
-  return result
 }
 
 const directiveResolvers: ResolverHashmap = {
@@ -276,6 +213,60 @@ export async function handleDirective(event: DirectiveEvent) {
         },
       },
     }
+  }
+
+  const directiveStub = { ...event }
+
+  //omit parts of event that are not needed by client:
+  delete directiveStub.profile
+  delete directiveStub.directive.header.messageId
+  delete directiveStub.directive.header.payloadVersion
+  delete directiveStub.directive.endpoint.scope
+  delete directiveStub.directive.endpoint.cookie
+
+  await publish(
+    `vsh/${thingId}/${event.directive.endpoint.endpointId}/directive`,
+    directiveStub
+  )
+
+  return immediateResponse
+}
+
+export async function handleReportState(event: DirectiveEvent) {
+  const { thingId } = event.directive.endpoint.cookie
+
+  const thingShadow = (await fetchThingShadow(thingId)) as Shadow
+  const vshClientVersion = thingShadow.state.reported?.vsh_version || '0.0.0'
+  const isThingConnected = thingShadow.state.reported?.connected || false
+
+  if (!isFeatureSupportedByClient('reportState', vshClientVersion)) {
+    return createErrorResponse(
+      event,
+      'FIRMWARE_OUT_OF_DATE',
+      `VSH Client version ${vshClientVersion} of thing ID ${thingId} does not support state reporting`
+    )
+  } else if (!isThingConnected) {
+    return createErrorResponse(
+      event,
+      'ENDPOINT_UNREACHABLE',
+      `Thing ID ${thingId} is not connected`
+    )
+  }
+
+  // https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#deferred
+  let immediateResponse = {
+    event: {
+      header: {
+        namespace: 'Alexa',
+        name: 'DeferredResponse',
+        messageId: event.directive.header.messageId + '-R',
+        correlationToken: event.directive.header.correlationToken,
+        payloadVersion: '3',
+      },
+      payload: {
+        estimatedDeferralInSeconds: 5,
+      },
+    },
   }
 
   const directiveStub = { ...event }

@@ -128,5 +128,5 @@ Now you need to configure your Node-RED vsh-connection node to use _your_ backen
 1. Check the MQTT traffic being logged to stdout of Node-RED
 1. Go to the [IoT section](https://eu-west-1.console.aws.amazon.com/iot/home?region=eu-west-1#/thinghub) in your AWS account and click on 'Manage > Things' in the side menu
    - The list should contain one 'Thing' representing your configured vsh-connection
-1. Click on the thing and inspect its shadow documents that hold the state of your device
-1. Click on the 'Activity' menu item and observe shadow changes as you control your virtual device through Alexa
+1. Click on the thing and inspect its shadow document that hold the configurations of your devices
+1. Click on the 'Activity' menu item and observe shadow changes when you connect / disconnect your connection (e.g. by restarting Node-RED)

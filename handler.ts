@@ -8,10 +8,11 @@ import {
   proactivelyUndiscoverDevices,
   pushChangeReportToAlexa,
   pushAsyncResponseToAlexa,
+  pushAsyncStateReportToAlexa,
 } from './helper'
 import handleDiscover from './handlers/discover'
 import handleAcceptGrant from './handlers/acceptGrant'
-import { handleDirective } from './handlers/updateState'
+import { handleDirective, handleReportState } from './handlers/updateState'
 import { deleteDevice, upsertDevice } from './db'
 import Device from './Device'
 import { publish } from './mqtt'
@@ -54,12 +55,13 @@ export const skill = async function (event, context) {
       return response
 
     case 'ReportState': //deprecated
-      response = createErrorResponse(
-        event,
-        'INVALID_DIRECTIVE',
-        'VSH no longer supports the ReportState directive'
-      )
+      response = await handleReportState(event)
       console.log('RESPONSE', JSON.stringify(response))
+      // response = createErrorResponse(
+      //   event,
+      //   'INVALID_DIRECTIVE',
+      //   'VSH no longer supports the ReportState directive'
+      // )
       return response
 
     default:
@@ -180,6 +182,13 @@ async function handleChangeReport(event) {
       return await pushAsyncResponseToAlexa(userId, event)
     } catch (e) {
       console.log('pushAsyncResponseToAlexa FAILED!', e.message)
+      return false
+    }
+  } else if (event.causeType === 'STATE_REPORT' && event.correlationToken) {
+    try {
+      return await pushAsyncStateReportToAlexa(userId, event)
+    } catch (e) {
+      console.log('pushAsyncStateReportToAlexa FAILED!', e.message)
       return false
     }
   } else {
