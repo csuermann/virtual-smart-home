@@ -70,7 +70,11 @@ export async function getStoredTokenRecord(
       if (err) {
         return reject(err)
       } else {
-        return resolve(data.Item)
+        if (data.Item) {
+          return resolve(data.Item)
+        } else {
+          return reject(`no token record found for user ${userId}`)
+        }
       }
     })
   })

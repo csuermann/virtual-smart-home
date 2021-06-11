@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         node-version: [14.x]
+        region: [eu-west-1, us-east-1, us-west-2]
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
@@ -19,12 +20,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
-      - name: serverless deploy to eu-west-1
+      - name: serverless deploy to ${{ matrix.region }}
         uses: serverless/github-action@master
         with:
-          args: deploy
+          args: deploy --region ${{ matrix.region }}
         env:
-          AWS_DEFAULT_REGION: eu-west-1 # eu-west-1 | us-east-1 | us-west-2
+          AWS_DEFAULT_REGION: ${{ matrix.region }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_SANDBOX }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_SANDBOX }}
           IOT_ENDPOINT: ${{ secrets.IOT_ENDPOINT_SANDBOX }}
