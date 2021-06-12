@@ -1,5 +1,5 @@
 import { getDevicesOfUser } from '../db'
-import Device from '../Device'
+import { Device } from '../Device'
 import endpointTemplates from '../endpointTemplates'
 
 function getEndpointForDevice(device: Device) {

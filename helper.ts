@@ -5,7 +5,8 @@ import { getStoredTokenRecord } from './db'
 import { getEndpointsForDevices } from './handlers/discover'
 
 import AWS = require('aws-sdk')
-import Device from './Device'
+import { Device } from './Device'
+import { publish } from './mqtt'
 
 AWS.config.update({ region: process.env.VSH_IOT_REGION })
 
@@ -351,19 +352,25 @@ export async function proactivelyDiscoverDevices(
       getEventGatewayUrl(skillRegion),
       addOrUpdateReport,
       {
-        validateStatus: (status) => {
-          return status == 202 // Resolve only if the status code is 202
-        },
+        validateStatus: (status) => status == 202, // throw if status code is not 202
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       }
     )
-
     return true
   } catch (e) {
+    await publish(`vsh/${devices[0].thingId}/service`, {
+      operation: 'setDeviceStatus',
+      status: 'proactive discovery failed',
+      color: 'yellow',
+      devices: devices.map((device) => device.deviceId),
+    })
+
     throw new Error(
-      `Request failed with status code ${e.response.status}. Response body: ${e.response.data}`
+      `Request failed with status code ${
+        e.response.status
+      }. Response body: ${JSON.stringify(e.response.data)}`
     )
   }
 }

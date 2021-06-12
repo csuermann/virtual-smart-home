@@ -1,7 +1,7 @@
 import * as AWS from 'aws-sdk'
 import dayjs = require('dayjs')
 import { fetchFreshAccessToken, TokenRecord } from './Authorization'
-import Device from './Device'
+import { Device } from './Device'
 
 AWS.config.update({ region: process.env.VSH_IOT_REGION })
 

@@ -14,7 +14,7 @@ import handleDiscover from './handlers/discover'
 import handleAcceptGrant from './handlers/acceptGrant'
 import { handleDirective, handleReportState } from './handlers/updateState'
 import { deleteDevice, upsertDevice } from './db'
-import Device from './Device'
+import { Device } from './Device'
 import { publish } from './mqtt'
 
 /**

@@ -1,4 +1,4 @@
-export default interface Device {
+export type Device = {
   deviceId: string
   template: string
   friendlyName: string
