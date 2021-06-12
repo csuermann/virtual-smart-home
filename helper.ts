@@ -346,17 +346,26 @@ export async function proactivelyDiscoverDevices(
 
   console.log('ADD-OR-UPDATE-REPORT', JSON.stringify(addOrUpdateReport))
 
-  const response: AxiosResponse = await Axios.post(
-    getEventGatewayUrl(skillRegion),
-    addOrUpdateReport,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  )
+  try {
+    const response: AxiosResponse = await Axios.post(
+      getEventGatewayUrl(skillRegion),
+      addOrUpdateReport,
+      {
+        validateStatus: (status) => {
+          return status == 202 // Resolve only if the status code is 202
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    )
 
-  return response.status == 202
+    return true
+  } catch (e) {
+    throw new Error(
+      `Request failed with status code ${e.response.status}. Response body: ${e.response.data}`
+    )
+  }
 }
 
 export async function proactivelyUndiscoverDevices(
