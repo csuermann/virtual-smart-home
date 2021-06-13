@@ -784,6 +784,57 @@ export default {
   //     },
   //   ],
   // },
+  MOTION_SENSOR: {
+    endpointId: '<device.id>',
+    manufacturerName: 'virtual smart home',
+    description: 'virtual motion sensor',
+    friendlyName: '<device.friendlyName>',
+    cookie: {},
+    additionalAttributes: {
+      manufacturer: 'virtual smart home',
+      model: 'virtual smart home',
+      serialNumber: '0000000',
+      firmwareVersion: '1.0.0',
+      softwareVersion: '1.0.0',
+      customIdentifier: '0000000',
+    },
+    displayCategories: ['MOTION_SENSOR'],
+    capabilities: [
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa.MotionSensor',
+        version: '3',
+        properties: {
+          supported: [
+            {
+              name: 'detectionState',
+            },
+          ],
+          proactivelyReported: true,
+          retrievable: true,
+        },
+      },
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa.EndpointHealth',
+        version: '3',
+        properties: {
+          supported: [
+            {
+              name: 'connectivity',
+            },
+          ],
+          proactivelyReported: true,
+          retrievable: true,
+        },
+      },
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa',
+        version: '3',
+      },
+    ],
+  },
   PLUG: {
     endpointId: '<device.id>',
     manufacturerName: 'virtual smart home',
