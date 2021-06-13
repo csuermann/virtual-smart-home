@@ -10,7 +10,7 @@ export function isAllowedClientVersion(clientVersion: string): boolean {
 }
 
 export function isLatestClientVersion(clientVersion: string): boolean {
-  return semver.satisfies(clientVersion, '>=2.3.0')
+  return semver.satisfies(clientVersion, '>=2.6.0')
 }
 
 export function isFeatureSupportedByClient(

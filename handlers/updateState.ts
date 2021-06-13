@@ -16,10 +16,6 @@ interface DirectiveEvent {
   [key: string]: any
 }
 
-interface ResolverHashmap {
-  [key: string]: ResolverFn
-}
-
 type ResolverFn = (event: DirectiveEvent) => Property[]
 
 function makeProperty(
@@ -36,110 +32,6 @@ function makeProperty(
     timeOfSample: new Date().toISOString(),
     uncertaintyInMilliseconds: 0,
   }
-}
-
-const directiveResolvers: ResolverHashmap = {
-  TurnOn: (event) => [
-    makeProperty('Alexa.PowerController', 'powerState', 'ON'),
-  ],
-  TurnOff: (event) => [
-    makeProperty('Alexa.PowerController', 'powerState', 'OFF'),
-  ],
-  SetBrightness: (event) => [
-    makeProperty(
-      'Alexa.BrightnessController',
-      'brightness',
-      event.directive.payload.brightness
-    ),
-  ],
-  SetPercentage: (event) => [
-    makeProperty(
-      'Alexa.PercentageController',
-      'percentage',
-      event.directive.payload.percentage
-    ),
-  ],
-  AdjustBrightness: (event) => [
-    makeProperty(
-      'Alexa.BrightnessController',
-      'brightness',
-      50 //will be set to correct value by ChangeReport
-    ),
-  ],
-  SetColor: (event) => [
-    makeProperty(
-      'Alexa.ColorController',
-      'color',
-      event.directive.payload.color
-    ),
-  ],
-  SetColorTemperature: (event) => [
-    makeProperty(
-      'Alexa.ColorTemperatureController',
-      'colorTemperatureInKelvin',
-      event.directive.payload.colorTemperatureInKelvin
-    ),
-  ],
-  IncreaseColorTemperature: (event) => [
-    makeProperty(
-      'Alexa.ColorTemperatureController',
-      'colorTemperatureInKelvin',
-      4000 //will be set to correct value by ChangeReport
-    ),
-  ],
-  DecreaseColorTemperature: (event) => [
-    makeProperty(
-      'Alexa.ColorTemperatureController',
-      'colorTemperatureInKelvin',
-      4000 //will be set to correct value by ChangeReport
-    ),
-  ],
-  Lock: (event) => [
-    makeProperty('Alexa.LockController', 'lockState', 'LOCKED'),
-  ],
-  Unlock: (event) => [
-    makeProperty('Alexa.LockController', 'lockState', 'UNLOCKED'),
-  ],
-  SetMode: (event) => [
-    makeProperty(
-      'Alexa.ModeController',
-      'mode',
-      event.directive.payload.mode,
-      event.directive.header.instance
-    ),
-  ],
-  Activate: (event) => [],
-  Deactivate: (event) => [],
-  AdjustTargetTemperature: (event) => [
-    makeProperty('Alexa.ThermostatController', 'targetSetpoint', {
-      value: 25, //will be set to correct value by ChangeReport
-      scale: event.directive.payload.targetSetpointDelta.scale,
-    }),
-  ],
-  SetTargetTemperature: (event) => [
-    makeProperty(
-      'Alexa.ThermostatController',
-      'targetSetpoint',
-      event.directive.payload.targetSetpoint
-    ),
-    makeProperty('Alexa.ThermostatController', 'thermostatMode', 'AUTO'),
-  ],
-  AdjustRangeValue: (event) => [
-    makeProperty(
-      'Alexa.RangeController',
-      'rangeValue',
-      0, //will be set to correct value by ChangeReport
-      event.directive.header.instance
-    ),
-  ],
-  SetRangeValue: (event) => [
-    makeProperty(
-      'Alexa.RangeController',
-      'rangeValue',
-      event.directive.payload.rangeValue,
-      event.directive.header.instance
-    ),
-  ],
 }
 
 export async function handleDirective(event: DirectiveEvent) {
@@ -161,12 +53,6 @@ export async function handleDirective(event: DirectiveEvent) {
       event,
       'ENDPOINT_UNREACHABLE',
       `Thing ID ${thingId} is not connected`
-    )
-  } else if (!directiveResolvers[directiveName]) {
-    return createErrorResponse(
-      event,
-      'INVALID_DIRECTIVE',
-      `${directiveName} is not (yet) supported by VSH backend`
     )
   }
 

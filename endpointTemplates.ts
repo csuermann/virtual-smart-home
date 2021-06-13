@@ -494,6 +494,20 @@ export default {
       },
       {
         type: 'AlexaInterface',
+        interface: 'Alexa.ChannelController',
+        version: '3',
+        properties: {
+          supported: [
+            {
+              name: 'channel',
+            },
+          ],
+          proactivelyReported: true,
+          retrievable: true,
+        },
+      },
+      {
+        type: 'AlexaInterface',
         interface: 'Alexa.PowerController',
         version: '3',
         properties: {
