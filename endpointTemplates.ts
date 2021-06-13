@@ -1,8 +1,8 @@
 export default {
-  SWITCH: {
+  BLINDS: {
     endpointId: '<device.id>',
     manufacturerName: 'virtual smart home',
-    description: 'virtual switch',
+    description: 'virtual blinds',
     friendlyName: '<device.friendlyName>',
     cookie: {},
     additionalAttributes: {
@@ -13,20 +13,100 @@ export default {
       softwareVersion: '1.0.0',
       customIdentifier: '0000000',
     },
-    displayCategories: ['SWITCH'],
+    displayCategories: ['INTERIOR_BLIND'],
     capabilities: [
       {
         type: 'AlexaInterface',
-        interface: 'Alexa.PowerController',
+        interface: 'Alexa.RangeController',
+        instance: 'Blind.Lift',
         version: '3',
         properties: {
           supported: [
             {
-              name: 'powerState',
+              name: 'rangeValue',
             },
           ],
           proactivelyReported: true,
           retrievable: true,
+        },
+        capabilityResources: {
+          friendlyNames: [
+            {
+              '@type': 'asset',
+              value: {
+                assetId: 'Alexa.Setting.Opening',
+              },
+            },
+          ],
+        },
+        configuration: {
+          supportedRange: {
+            minimumValue: 0,
+            maximumValue: 100,
+            precision: 1,
+          },
+          unitOfMeasure: 'Alexa.Unit.Percent',
+        },
+        semantics: {
+          actionMappings: [
+            {
+              '@type': 'ActionsToDirective',
+              actions: ['Alexa.Actions.Close'],
+              directive: {
+                name: 'SetRangeValue',
+                payload: {
+                  rangeValue: 0,
+                },
+              },
+            },
+            {
+              '@type': 'ActionsToDirective',
+              actions: ['Alexa.Actions.Open'],
+              directive: {
+                name: 'SetRangeValue',
+                payload: {
+                  rangeValue: 100,
+                },
+              },
+            },
+            {
+              '@type': 'ActionsToDirective',
+              actions: ['Alexa.Actions.Lower'],
+              directive: {
+                name: 'AdjustRangeValue',
+                payload: {
+                  rangeValueDelta: -10,
+                  rangeValueDeltaDefault: false,
+                },
+              },
+            },
+            {
+              '@type': 'ActionsToDirective',
+              actions: ['Alexa.Actions.Raise'],
+              directive: {
+                name: 'AdjustRangeValue',
+                payload: {
+                  rangeValueDelta: 10,
+                  rangeValueDeltaDefault: false,
+                },
+              },
+            },
+          ],
+          stateMappings: [
+            {
+              '@type': 'StatesToValue',
+              states: ['Alexa.States.Closed'],
+              value: 0,
+            },
+            {
+              '@type': 'StatesToRange',
+              states: ['Alexa.States.Open'],
+              range: {
+                minimumValue: 1,
+                maximumValue: 100,
+              },
+            },
+          ],
         },
       },
       {
@@ -116,6 +196,57 @@ export default {
           supported: [
             {
               name: 'color',
+            },
+          ],
+          proactivelyReported: true,
+          retrievable: true,
+        },
+      },
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa.EndpointHealth',
+        version: '3',
+        properties: {
+          supported: [
+            {
+              name: 'connectivity',
+            },
+          ],
+          proactivelyReported: true,
+          retrievable: true,
+        },
+      },
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa',
+        version: '3',
+      },
+    ],
+  },
+  CONTACT_SENSOR: {
+    endpointId: '<device.id>',
+    manufacturerName: 'virtual smart home',
+    description: 'virtual contact sensor',
+    friendlyName: '<device.friendlyName>',
+    cookie: {},
+    additionalAttributes: {
+      manufacturer: 'virtual smart home',
+      model: 'virtual smart home',
+      serialNumber: '0000000',
+      firmwareVersion: '1.0.0',
+      softwareVersion: '1.0.0',
+      customIdentifier: '0000000',
+    },
+    displayCategories: ['CONTACT_SENSOR'],
+    capabilities: [
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa.ContactSensor',
+        version: '3',
+        properties: {
+          supported: [
+            {
+              name: 'detectionState',
             },
           ],
           proactivelyReported: true,
@@ -459,108 +590,6 @@ export default {
       },
     ],
   },
-  PLUG: {
-    endpointId: '<device.id>',
-    manufacturerName: 'virtual smart home',
-    description: 'virtual plug',
-    friendlyName: '<device.friendlyName>',
-    cookie: {},
-    additionalAttributes: {
-      manufacturer: 'virtual smart home',
-      model: 'virtual smart home',
-      serialNumber: '0000000',
-      firmwareVersion: '1.0.0',
-      softwareVersion: '1.0.0',
-      customIdentifier: '0000000',
-    },
-    displayCategories: ['SMARTPLUG'],
-    capabilities: [
-      {
-        type: 'AlexaInterface',
-        interface: 'Alexa.PowerController',
-        version: '3',
-        properties: {
-          supported: [
-            {
-              name: 'powerState',
-            },
-          ],
-          proactivelyReported: true,
-          retrievable: true,
-        },
-      },
-      {
-        type: 'AlexaInterface',
-        interface: 'Alexa.EndpointHealth',
-        version: '3',
-        properties: {
-          supported: [
-            {
-              name: 'connectivity',
-            },
-          ],
-          proactivelyReported: true,
-          retrievable: true,
-        },
-      },
-      {
-        type: 'AlexaInterface',
-        interface: 'Alexa',
-        version: '3',
-      },
-    ],
-  },
-  TEMPERATURE_SENSOR: {
-    endpointId: '<device.id>',
-    manufacturerName: 'virtual smart home',
-    description: 'virtual temperature sensor',
-    friendlyName: '<device.friendlyName>',
-    cookie: {},
-    additionalAttributes: {
-      manufacturer: 'virtual smart home',
-      model: 'virtual smart home',
-      serialNumber: '0000000',
-      firmwareVersion: '1.0.0',
-      softwareVersion: '1.0.0',
-      customIdentifier: '0000000',
-    },
-    displayCategories: ['TEMPERATURE_SENSOR'],
-    capabilities: [
-      {
-        type: 'AlexaInterface',
-        interface: 'Alexa.TemperatureSensor',
-        version: '3',
-        properties: {
-          supported: [
-            {
-              name: 'temperature',
-            },
-          ],
-          proactivelyReported: true,
-          retrievable: true,
-        },
-      },
-      {
-        type: 'AlexaInterface',
-        interface: 'Alexa.EndpointHealth',
-        version: '3',
-        properties: {
-          supported: [
-            {
-              name: 'connectivity',
-            },
-          ],
-          proactivelyReported: true,
-          retrievable: true,
-        },
-      },
-      {
-        type: 'AlexaInterface',
-        interface: 'Alexa',
-        version: '3',
-      },
-    ],
-  },
   GARAGE_DOOR_OPENER: {
     endpointId: '<device.id>',
     manufacturerName: 'virtual smart home',
@@ -755,10 +784,10 @@ export default {
   //     },
   //   ],
   // },
-  BLINDS: {
+  PLUG: {
     endpointId: '<device.id>',
     manufacturerName: 'virtual smart home',
-    description: 'virtual blinds',
+    description: 'virtual plug',
     friendlyName: '<device.friendlyName>',
     cookie: {},
     additionalAttributes: {
@@ -769,100 +798,20 @@ export default {
       softwareVersion: '1.0.0',
       customIdentifier: '0000000',
     },
-    displayCategories: ['INTERIOR_BLIND'],
+    displayCategories: ['SMARTPLUG'],
     capabilities: [
       {
         type: 'AlexaInterface',
-        interface: 'Alexa.RangeController',
-        instance: 'Blind.Lift',
+        interface: 'Alexa.PowerController',
         version: '3',
         properties: {
           supported: [
             {
-              name: 'rangeValue',
+              name: 'powerState',
             },
           ],
           proactivelyReported: true,
           retrievable: true,
-        },
-        capabilityResources: {
-          friendlyNames: [
-            {
-              '@type': 'asset',
-              value: {
-                assetId: 'Alexa.Setting.Opening',
-              },
-            },
-          ],
-        },
-        configuration: {
-          supportedRange: {
-            minimumValue: 0,
-            maximumValue: 100,
-            precision: 1,
-          },
-          unitOfMeasure: 'Alexa.Unit.Percent',
-        },
-        semantics: {
-          actionMappings: [
-            {
-              '@type': 'ActionsToDirective',
-              actions: ['Alexa.Actions.Close'],
-              directive: {
-                name: 'SetRangeValue',
-                payload: {
-                  rangeValue: 0,
-                },
-              },
-            },
-            {
-              '@type': 'ActionsToDirective',
-              actions: ['Alexa.Actions.Open'],
-              directive: {
-                name: 'SetRangeValue',
-                payload: {
-                  rangeValue: 100,
-                },
-              },
-            },
-            {
-              '@type': 'ActionsToDirective',
-              actions: ['Alexa.Actions.Lower'],
-              directive: {
-                name: 'AdjustRangeValue',
-                payload: {
-                  rangeValueDelta: -10,
-                  rangeValueDeltaDefault: false,
-                },
-              },
-            },
-            {
-              '@type': 'ActionsToDirective',
-              actions: ['Alexa.Actions.Raise'],
-              directive: {
-                name: 'AdjustRangeValue',
-                payload: {
-                  rangeValueDelta: 10,
-                  rangeValueDeltaDefault: false,
-                },
-              },
-            },
-          ],
-          stateMappings: [
-            {
-              '@type': 'StatesToValue',
-              states: ['Alexa.States.Closed'],
-              value: 0,
-            },
-            {
-              '@type': 'StatesToRange',
-              states: ['Alexa.States.Open'],
-              range: {
-                minimumValue: 1,
-                maximumValue: 100,
-              },
-            },
-          ],
         },
       },
       {
@@ -904,6 +853,108 @@ export default {
         interface: 'Alexa.SceneController',
         version: '3',
         supportsDeactivation: true,
+      },
+    ],
+  },
+  SWITCH: {
+    endpointId: '<device.id>',
+    manufacturerName: 'virtual smart home',
+    description: 'virtual switch',
+    friendlyName: '<device.friendlyName>',
+    cookie: {},
+    additionalAttributes: {
+      manufacturer: 'virtual smart home',
+      model: 'virtual smart home',
+      serialNumber: '0000000',
+      firmwareVersion: '1.0.0',
+      softwareVersion: '1.0.0',
+      customIdentifier: '0000000',
+    },
+    displayCategories: ['SWITCH'],
+    capabilities: [
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa.PowerController',
+        version: '3',
+        properties: {
+          supported: [
+            {
+              name: 'powerState',
+            },
+          ],
+          proactivelyReported: true,
+          retrievable: true,
+        },
+      },
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa.EndpointHealth',
+        version: '3',
+        properties: {
+          supported: [
+            {
+              name: 'connectivity',
+            },
+          ],
+          proactivelyReported: true,
+          retrievable: true,
+        },
+      },
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa',
+        version: '3',
+      },
+    ],
+  },
+  TEMPERATURE_SENSOR: {
+    endpointId: '<device.id>',
+    manufacturerName: 'virtual smart home',
+    description: 'virtual temperature sensor',
+    friendlyName: '<device.friendlyName>',
+    cookie: {},
+    additionalAttributes: {
+      manufacturer: 'virtual smart home',
+      model: 'virtual smart home',
+      serialNumber: '0000000',
+      firmwareVersion: '1.0.0',
+      softwareVersion: '1.0.0',
+      customIdentifier: '0000000',
+    },
+    displayCategories: ['TEMPERATURE_SENSOR'],
+    capabilities: [
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa.TemperatureSensor',
+        version: '3',
+        properties: {
+          supported: [
+            {
+              name: 'temperature',
+            },
+          ],
+          proactivelyReported: true,
+          retrievable: true,
+        },
+      },
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa.EndpointHealth',
+        version: '3',
+        properties: {
+          supported: [
+            {
+              name: 'connectivity',
+            },
+          ],
+          proactivelyReported: true,
+          retrievable: true,
+        },
+      },
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa',
+        version: '3',
       },
     ],
   },
