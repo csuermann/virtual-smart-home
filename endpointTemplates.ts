@@ -1156,6 +1156,20 @@ export default {
     capabilities: [
       {
         type: 'AlexaInterface',
+        interface: 'Alexa.PowerController',
+        version: '3',
+        properties: {
+          supported: [
+            {
+              name: 'powerState',
+            },
+          ],
+          proactivelyReported: true,
+          retrievable: true,
+        },
+      },
+      {
+        type: 'AlexaInterface',
         interface: 'Alexa.ThermostatController',
         version: '3',
         properties: {
@@ -1177,12 +1191,7 @@ export default {
           retrievable: true,
         },
         configuration: {
-          supportedModes: [
-            'AUTO',
-            // 'HEAT',
-            // 'COOL',
-            // 'OFF'
-          ],
+          supportedModes: ['AUTO', 'HEAT', 'COOL', 'OFF'],
           supportsScheduling: false,
         },
       },
