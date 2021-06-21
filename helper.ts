@@ -31,6 +31,7 @@ export type VshClientBackchannelEvent = {
     }
   ]
   correlationToken?: string
+  userIdToken?: string //available as of v2.8.0
   causeType: CauseType
 }
 

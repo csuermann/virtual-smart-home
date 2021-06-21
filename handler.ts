@@ -1,4 +1,5 @@
 import 'source-map-support/register'
+import * as crypto from 'crypto'
 import {
   extractAccessTokenFromEvent,
   createErrorResponse,
@@ -9,6 +10,7 @@ import {
   pushChangeReportToAlexa,
   pushAsyncResponseToAlexa,
   pushAsyncStateReportToAlexa,
+  VshClientBackchannelEvent,
 } from './helper'
 import handleDiscover from './handlers/discover'
 import handleAcceptGrant from './handlers/acceptGrant'
@@ -16,6 +18,7 @@ import { handleDirective, handleReportState } from './handlers/updateState'
 import { deleteDevice, upsertDevice } from './db'
 import { Device } from './Device'
 import { publish } from './mqtt'
+import { isAllowedClientVersion } from './version'
 
 /**
  * This function gets invoked by Alexa with Directives
@@ -92,14 +95,16 @@ export const backchannel = async function (event, context) {
     case 'changeReport':
       result = await handleChangeReport(event)
       break
+
+    case 'requestConfig':
+      result = await handleRequestConfig(event)
+      break
   }
 
   console.log('RESULT', result)
 }
 
-async function killDeviceDueToOutdatedVersion(event) {
-  const thingId = event.thingId
-
+async function killDeviceDueToOutdatedVersion({ thingId }) {
   await publish(`vsh/${thingId}/kill`, {
     reason:
       "OUTDATED VERSION! Please update 'virtual smart home' package for Node-RED",
@@ -170,21 +175,29 @@ export async function handleBackchannelBulkUndiscover({ thingId, devices }) {
   return await proactivelyUndiscoverDevices(userId, deviceIDsToUndiscover)
 }
 
-async function handleChangeReport(event) {
-  const userId = await lookupUserIdForThing(event.thingId)
+async function handleChangeReport(event: VshClientBackchannelEvent) {
+  const { thingId, causeType, correlationToken, userIdToken } = event
+  let userId: string
+
+  if (userIdToken && userIdToken === makeUserIdToken({ thingId, userId })) {
+    userId = userIdToken.match(/^(.*)#.*/)[1]
+  } else {
+    //fallback for < v2.8.0
+    userId = await lookupUserIdForThing(thingId)
+  }
 
   if (!userId) {
     return false
   }
 
-  if (event.causeType === 'VOICE_INTERACTION' && event.correlationToken) {
+  if (causeType === 'VOICE_INTERACTION' && correlationToken) {
     try {
       return await pushAsyncResponseToAlexa(userId, event)
     } catch (e) {
       console.log('pushAsyncResponseToAlexa FAILED!', e.message)
       return false
     }
-  } else if (event.causeType === 'STATE_REPORT' && event.correlationToken) {
+  } else if (causeType === 'STATE_REPORT' && correlationToken) {
     try {
       return await pushAsyncStateReportToAlexa(userId, event)
     } catch (e) {
@@ -199,6 +212,47 @@ async function handleChangeReport(event) {
       return false
     }
   }
+}
+
+async function handleRequestConfig({
+  thingId,
+  vshVersion,
+}: {
+  thingId: string
+  vshVersion: string
+}) {
+  if (!isAllowedClientVersion(vshVersion)) {
+    return await killDeviceDueToOutdatedVersion({ thingId })
+  }
+
+  const userId = await lookupUserIdForThing(thingId)
+
+  if (!userId) {
+    return false
+  }
+
+  await publish(`vsh/${thingId}/service`, {
+    operation: 'overrideConfig',
+    userIdToken: makeUserIdToken({ thingId, userId }),
+    allowedDeviceCount: 100,
+    rateLimiter: [
+      { period: 1 * 60 * 1000, limit: 12, penalty: 0, repeat: 10 }, //for 10 min: Limit to 12 req / min
+      { period: 10 * 60 * 1000, limit: 5, penalty: 1 }, //afterward: Limit to 5 req / 10 min
+    ],
+  })
+}
+
+function makeUserIdToken({
+  thingId,
+  userId,
+}: {
+  thingId: string
+  userId: string
+}) {
+  return `${userId}#${crypto
+    .createHash('sha1')
+    .update(`${userId}-${thingId}-${process.env.HASH_SECRET}`)
+    .digest('hex')}`
 }
 
 async function lookupUserIdForThing(thingId: string) {

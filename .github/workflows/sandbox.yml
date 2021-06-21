@@ -33,3 +33,4 @@ jobs:
           SKILL_ID: ${{ secrets.SKILL_ID_SANDBOX }}
           ALEXA_CLIENT_ID: ${{ secrets.ALEXA_CLIENT_ID_SANDBOX }}
           ALEXA_CLIENT_SECRET: ${{ secrets.ALEXA_CLIENT_SECRET_SANDBOX }}
+          HASH_SECRET: ${{ secrets.HASH_SECRET_SANDBOX }}

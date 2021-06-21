@@ -78,6 +78,9 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 1. Create an IoT Billing Group called 'virtual-smart-home-billing-group'
 
    `aws iot create-billing-group --billing-group-name virtual-smart-home-billing-group`
+1. Create an environment variable called 'HASH_SECRET' containing a random string
+
+   `export HASH_SECRET=foobar2842978`
 1. run `npm install`
 1. install the serverless framework by running `npm install -g serverless`
 1. run `serverless deploy`
@@ -87,7 +90,7 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 
    `aws lambda get-function --function-name virtual-smart-home-dev-skill`
 1. In the Alexa Developer Console click on 'Smart Home' in the side menu
-1. Paste the value of the FunctionArn (from step 20) as 'Default Endpoint' as well as for 'Europe / India'
+1. Paste the value of the FunctionArn (from step 21) as 'Default Endpoint' as well as for 'Europe / India'
 1. Click Save
 1. Your own backend should now be set up! Congratulations!
 

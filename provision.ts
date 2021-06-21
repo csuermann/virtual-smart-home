@@ -192,6 +192,7 @@ app.post('/provision', async function (req, res) {
 app.get('/check_version', async function (req, res) {
   const clientVersion: string = (req.query.version as string) || '0.0.0'
   const nodeRedVersion: string = (req.query.nr_version as string) || '0.0.0'
+  const thingId: string = (req.query.thingId as string) || null
 
   const isAllowedVersion = isAllowedClientVersion(clientVersion)
   const isLatestVersion = isLatestClientVersion(clientVersion)
@@ -203,7 +204,7 @@ app.get('/check_version', async function (req, res) {
     isAllowedVersion,
     isLatestVersion,
     updateHint,
-    allowedDeviceCount: 100,
+    allowedDeviceCount: 100, //deprecated as of v2.8.0. Leave here for backwards compatibility
   })
 })
 

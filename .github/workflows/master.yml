@@ -32,3 +32,4 @@ jobs:
           SKILL_ID: ${{ secrets.SKILL_ID }}
           ALEXA_CLIENT_ID: ${{ secrets.ALEXA_CLIENT_ID }}
           ALEXA_CLIENT_SECRET: ${{ secrets.ALEXA_CLIENT_SECRET }}
+          HASH_SECRET: ${{ secrets.HASH_SECRET }}

@@ -284,3 +284,22 @@ Resources:
           - Lambda:
               FunctionArn:
                 Fn::GetAtt: [BackchannelLambdaFunction, Arn]
+
+  requestConfig:
+    Type: AWS::IoT::TopicRule
+    DependsOn: BackchannelLambdaFunction
+    Properties:
+      RuleName: requestConfig
+      TopicRulePayload:
+        RuleDisabled: false
+        AwsIotSqlVersion: '2016-03-23'
+        Sql: >
+          SELECT
+            'requestConfig' as rule,
+            topic(2) as thingId,
+            *
+          FROM 'vsh/+/requestConfig'
+        Actions:
+          - Lambda:
+              FunctionArn:
+                Fn::GetAtt: [BackchannelLambdaFunction, Arn]
