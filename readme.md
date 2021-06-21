@@ -80,7 +80,7 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
    `aws iot create-billing-group --billing-group-name virtual-smart-home-billing-group`
 1. Create an environment variable called 'HASH_SECRET' containing a random string
 
-   `export HASH_SECRET=foobar2842978`
+   `export HASH_SECRET=foobar28429789`
 1. run `npm install`
 1. install the serverless framework by running `npm install -g serverless`
 1. run `serverless deploy`
