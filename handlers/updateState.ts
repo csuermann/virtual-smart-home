@@ -121,22 +121,25 @@ export async function handleDirective(event: DirectiveEvent) {
 export async function handleReportState(event: DirectiveEvent) {
   const { thingId } = event.directive.endpoint.cookie
 
-  const thingShadow = (await fetchThingShadow(thingId)) as Shadow
-  const vshClientVersion = thingShadow.state.reported?.vsh_version || '0.0.0'
-  const isThingConnected = thingShadow.state.reported?.connected || false
+  if (false) {
+    //deactivated as it resulted in too many shadow operations
+    const thingShadow = (await fetchThingShadow(thingId)) as Shadow
+    const vshClientVersion = thingShadow.state.reported?.vsh_version || '0.0.0'
+    const isThingConnected = thingShadow.state.reported?.connected || false
 
-  if (!isFeatureSupportedByClient('reportState', vshClientVersion)) {
-    return createErrorResponse(
-      event,
-      'FIRMWARE_OUT_OF_DATE',
-      `VSH Client version ${vshClientVersion} of thing ID ${thingId} does not support state reporting`
-    )
-  } else if (!isThingConnected) {
-    return createErrorResponse(
-      event,
-      'ENDPOINT_UNREACHABLE',
-      `Thing ID ${thingId} is not connected`
-    )
+    if (!isFeatureSupportedByClient('reportState', vshClientVersion)) {
+      return createErrorResponse(
+        event,
+        'FIRMWARE_OUT_OF_DATE',
+        `VSH Client version ${vshClientVersion} of thing ID ${thingId} does not support state reporting`
+      )
+    } else if (!isThingConnected) {
+      return createErrorResponse(
+        event,
+        'ENDPOINT_UNREACHABLE',
+        `Thing ID ${thingId} is not connected`
+      )
+    }
   }
 
   // https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#deferred
