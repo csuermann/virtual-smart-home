@@ -1191,7 +1191,7 @@ export default {
           retrievable: true,
         },
         configuration: {
-          supportedModes: ['AUTO', 'HEAT', 'COOL', 'OFF'],
+          supportedModes: ['AUTO', 'HEAT', 'COOL', 'ECO', 'OFF'],
           supportsScheduling: false,
         },
       },
