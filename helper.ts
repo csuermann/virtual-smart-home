@@ -311,13 +311,14 @@ export async function pushAsyncStateReportToAlexa(
     getEventGatewayUrl(skillRegion),
     alexaResponse,
     {
+      validateStatus: (status) => status == 202, // throw if status code is not 202
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     }
   )
 
-  return response.status == 202
+  return true
 }
 
 export async function proactivelyDiscoverDevices(

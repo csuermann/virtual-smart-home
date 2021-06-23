@@ -194,21 +194,21 @@ async function handleChangeReport(event: VshClientBackchannelEvent) {
     try {
       return await pushAsyncResponseToAlexa(userId, event)
     } catch (e) {
-      console.log('pushAsyncResponseToAlexa FAILED!', e.message)
+      console.log('pushAsyncResponseToAlexa FAILED!', e)
       return false
     }
   } else if (causeType === 'STATE_REPORT' && correlationToken) {
     try {
       return await pushAsyncStateReportToAlexa(userId, event)
     } catch (e) {
-      console.log('pushAsyncStateReportToAlexa FAILED!', e.message)
+      console.log('pushAsyncStateReportToAlexa FAILED!', e)
       return false
     }
   } else {
     try {
       return await pushChangeReportToAlexa(userId, event)
     } catch (e) {
-      console.log('pushChangeReportToAlexa FAILED!', e.message)
+      console.log('pushChangeReportToAlexa FAILED!', e)
       return false
     }
   }
@@ -240,6 +240,8 @@ async function handleRequestConfig({
       { period: 10 * 60 * 1000, limit: 5, penalty: 1 }, //afterward: Limit to 5 req / 10 min
     ],
   })
+
+  return true
 }
 
 function makeUserIdToken({
