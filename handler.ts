@@ -1,4 +1,6 @@
 import 'source-map-support/register'
+import * as log from 'log'
+import * as logger from 'log-aws-lambda'
 import * as crypto from 'crypto'
 import {
   extractAccessTokenFromEvent,
@@ -20,6 +22,35 @@ import { Device } from './Device'
 import { publish } from './mqtt'
 import { isAllowedClientVersion } from './version'
 
+logger()
+
+function minifyDirectiveEvent(event) {
+  return {
+    directive: {
+      header: {
+        name: event.directive.header.name,
+      },
+      endpoint: {
+        endpointId: event.directive.endpoint.endpointId,
+        cookie: {
+          template: event.directive.endpoint.cookie.template,
+          thingId: event.directive.endpoint.cookie.thingId,
+        },
+      },
+    },
+  }
+}
+
+function minifyBackchannelEvent(event) {
+  return {
+    rule: event.rule,
+    thingId: event.thingId,
+    endpointId: event.endpointId,
+    causeType: event.causeType,
+    vshVersion: event.vshVersion,
+  }
+}
+
 /**
  * This function gets invoked by Alexa with Directives
  * @param event
@@ -30,18 +61,22 @@ export const skill = async function (event, context) {
     const accessToken = extractAccessTokenFromEvent(event)
     event.profile = await fetchProfile(accessToken)
   } catch (e) {
-    console.log(e)
     const response = createErrorResponse(
       event,
       'EXPIRED_AUTHORIZATION_CREDENTIAL',
       'invalid token'
     )
-    console.log('REQUEST', JSON.stringify(event))
-    console.log('ERROR RESPONSE', JSON.stringify(response))
+    log.notice(
+      'REQUEST: %j \n EXCEPTION: %o \n RESPONSE: %j',
+      event,
+      e,
+      response
+    )
     return response
   }
 
-  console.log('REQUEST', JSON.stringify(event))
+  log.info('REQUEST STUB: %j', minifyDirectiveEvent(event))
+  log.debug('REQ: %j', event)
 
   const directive: string = event.directive.header.name
   let response
@@ -49,33 +84,29 @@ export const skill = async function (event, context) {
   switch (directive) {
     case 'AcceptGrant':
       response = await handleAcceptGrant(event)
-      console.log('RESPONSE', JSON.stringify(response))
+      log.debug('RESPONSE: %j', response)
       return response
 
     case 'Discover':
       response = await handleDiscover(event)
-      console.log('RESPONSE', JSON.stringify(response))
+      log.debug('RESPONSE: %j', response)
       return response
 
     case 'ReportState': //deprecated
       response = await handleReportState(event)
-      console.log('RESPONSE', JSON.stringify(response))
-      // response = createErrorResponse(
-      //   event,
-      //   'INVALID_DIRECTIVE',
-      //   'VSH no longer supports the ReportState directive'
-      // )
+      log.debug('RESPONSE: %j', response)
       return response
 
     default:
       response = await handleDirective(event)
-      console.log('RESPONSE', JSON.stringify(response))
+      log.debug('RESPONSE: %j', response)
       return response
   }
 }
 
 export const backchannel = async function (event, context) {
-  console.log('REQUEST', JSON.stringify(event))
+  log.info('REQUEST STUB: %j', minifyBackchannelEvent(event))
+  log.debug('REQ: %j', event)
 
   let result
 
@@ -101,7 +132,7 @@ export const backchannel = async function (event, context) {
       break
   }
 
-  console.log('RESULT', result)
+  log.debug('RESULT: %o', result)
 }
 
 async function killDeviceDueToOutdatedVersion({ thingId }) {
@@ -110,7 +141,7 @@ async function killDeviceDueToOutdatedVersion({ thingId }) {
       "OUTDATED VERSION! Please update 'virtual smart home' package for Node-RED",
   })
 
-  console.log(`killed thing ${thingId} due to outdated client version!`)
+  log.notice('killed thing %s due to outdated client version!', thingId)
 
   return true
 }
@@ -139,7 +170,7 @@ async function handleBackchannelBulkDiscover(event) {
   try {
     return await proactivelyDiscoverDevices(userId, devicesToDiscover)
   } catch (e) {
-    console.log('proactivelyDiscoverDevices FAILED!', e.message)
+    log.error('proactivelyDiscoverDevices FAILED! %s', e.message)
     return false
   }
 }
@@ -194,21 +225,21 @@ async function handleChangeReport(event: VshClientBackchannelEvent) {
     try {
       return await pushAsyncResponseToAlexa(userId, event)
     } catch (e) {
-      console.log('pushAsyncResponseToAlexa FAILED!', e.message)
+      log.error('pushAsyncResponseToAlexa FAILED! %s', e.message)
       return false
     }
   } else if (causeType === 'STATE_REPORT' && correlationToken) {
     try {
       return await pushAsyncStateReportToAlexa(userId, event)
     } catch (e) {
-      console.log('pushAsyncStateReportToAlexa FAILED!', e.message)
+      log.error('pushAsyncStateReportToAlexa FAILED! %s', e.message)
       return false
     }
   } else {
     try {
       return await pushChangeReportToAlexa(userId, event)
     } catch (e) {
-      console.log('pushChangeReportToAlexa FAILED!', e.message)
+      log.error('pushChangeReportToAlexa FAILED!! %s', e.message)
       return false
     }
   }
@@ -240,6 +271,8 @@ async function handleRequestConfig({
       { period: 10 * 60 * 1000, limit: 5, penalty: 1 }, //afterward: Limit to 5 req / 10 min
     ],
   })
+
+  return true
 }
 
 function makeUserIdToken({

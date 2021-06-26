@@ -1,5 +1,6 @@
 import Axios, { AxiosResponse, AxiosError } from 'axios'
 import { v4 as uuidv4 } from 'uuid'
+import * as log from 'log'
 
 import { getStoredTokenRecord } from './db'
 import { getEndpointsForDevices } from './handlers/discover'
@@ -172,7 +173,7 @@ export async function pushChangeReportToAlexa(
     uncertaintyInMilliseconds: 250,
   })
 
-  console.log('CHANGE REPORT', JSON.stringify(changeReport))
+  log.debug('CHANGE REPORT: %j', changeReport)
 
   const response: AxiosResponse = await Axios.post(
     getEventGatewayUrl(skillRegion),
@@ -240,7 +241,7 @@ export async function pushAsyncResponseToAlexa(
     uncertaintyInMilliseconds: 250,
   })
 
-  console.log('ASYNC DIRECTIVE RESPONSE', JSON.stringify(alexaResponse))
+  log.debug('ASYNC DIRECTIVE RESPONSE: %j', alexaResponse)
 
   const response: AxiosResponse = await Axios.post(
     getEventGatewayUrl(skillRegion),
@@ -305,7 +306,7 @@ export async function pushAsyncStateReportToAlexa(
     uncertaintyInMilliseconds: 250,
   })
 
-  console.log('ASYNC STATE REPORT', JSON.stringify(alexaResponse))
+  log.debug('ASYNC STATE REPORT: %j', alexaResponse)
 
   const response: AxiosResponse = await Axios.post(
     getEventGatewayUrl(skillRegion),
@@ -346,7 +347,7 @@ export async function proactivelyDiscoverDevices(
     },
   }
 
-  console.log('ADD-OR-UPDATE-REPORT', JSON.stringify(addOrUpdateReport))
+  log.debug('ADD-OR-UPDATE-REPORT: %j', addOrUpdateReport)
 
   try {
     const response: AxiosResponse = await Axios.post(
@@ -403,7 +404,7 @@ export async function proactivelyUndiscoverDevices(
     },
   }
 
-  console.log('DELETE-REPORT', JSON.stringify(deleteReport))
+  log.debug('DELETE-REPORT: %j', deleteReport)
 
   try {
     const response: AxiosResponse = await Axios.post(
@@ -418,7 +419,7 @@ export async function proactivelyUndiscoverDevices(
 
     return response.status == 202
   } catch (e) {
-    console.log('proactivelyUndiscoverSingleDevice FAILED', e.message)
+    log.notice('proactivelyUndiscoverSingleDevice FAILED: %s', e.message)
     throw e
   }
 }
