@@ -18,6 +18,7 @@ provider:
     ALEXA_CLIENT_ID: ${env:ALEXA_CLIENT_ID}
     ALEXA_CLIENT_SECRET: ${env:ALEXA_CLIENT_SECRET}
     HASH_SECRET: ${env:HASH_SECRET}
+    LOG_LEVEL: ${env:LOG_LEVEL}
 
   iamRoleStatements:
     - Effect: Allow

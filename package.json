@@ -17,6 +17,8 @@
     "dayjs": "^1.8.34",
     "express": "^4.17.1",
     "js-base64": "^3.4.5",
+    "log": "^6.0.0",
+    "log-aws-lambda": "^5.0.0",
     "semver": "^7.3.4",
     "serverless-http": "^2.5.0",
     "source-map-support": "^0.5.10",
@@ -25,7 +27,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.7",
     "@types/express": "^4.17.8",
-    "@types/node": "^10.17.44",
+    "@types/node": "^15.12.4",
     "serverless-alexa-skills": "^0.1.0",
     "serverless-plugin-select": "^2.0.0-rc.1",
     "serverless-webpack": "^5.3.4",

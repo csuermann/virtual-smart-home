@@ -3,6 +3,7 @@ import * as express from 'express'
 import * as cors from 'cors'
 import { v4 as uuidv4 } from 'uuid'
 import { encode, decode } from 'js-base64'
+import * as log from 'log'
 
 import { fetchProfile, proactivelyUndiscoverDevices } from './helper'
 import AWS = require('aws-sdk')
@@ -139,11 +140,12 @@ app.post('/provision', async function (req, res) {
   // vsh clients send version info since v1.15.1
   const vshVersion = req.body.vshVersion || '0.0.0'
 
-  console.log(`PROVISIONING REQUEST for client with version: ${vshVersion}`)
+  log.info('PROVISIONING REQUEST for client with version %s', vshVersion)
 
   if (!isAllowedClientVersion(vshVersion)) {
-    console.log(
-      `PROVISIONING FAILED: ${vshVersion} does not satisfy version constraints!`
+    log.error(
+      'PROVISIONING FAILED: %s does not satisfy version constraints!',
+      vshVersion
     )
 
     res.status(400).send({
@@ -184,7 +186,7 @@ app.post('/provision', async function (req, res) {
     }
     res.send(response)
   } catch (e) {
-    console.log('PROVISIONING FAILED', e.message)
+    log.error('PROVISIONING FAILED: %s', e.message)
     res.status(400).send({ error: 'provisioning failed' })
   }
 })
@@ -222,7 +224,7 @@ app.get('/devices', async function (req, res) {
 
     res.send(devices)
   } catch (e) {
-    console.log('FETCHING DEVICE LIST FAILED', e.message)
+    log.error('FETCHING DEVICE LIST FAILED: %s', e.message)
     res.status(400).send({ error: 'fetching list of devices failed' })
   }
 })
