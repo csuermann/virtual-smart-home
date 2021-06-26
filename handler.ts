@@ -25,29 +25,34 @@ import { isAllowedClientVersion } from './version'
 logger()
 
 function minifyDirectiveEvent(event) {
-  return {
+  const result = {
     directive: {
       header: {
         name: event.directive.header.name,
       },
-      endpoint: {
-        endpointId: event.directive.endpoint.endpointId,
-        cookie: {
-          template: event.directive.endpoint.cookie.template,
-          thingId: event.directive.endpoint.cookie.thingId,
-        },
-      },
     },
   }
+
+  if (event.directive.endpoint) {
+    result.directive['endpoint'] = {
+      endpointId: event.directive.endpoint.endpointId,
+      cookie: {
+        template: event.directive.endpoint.cookie.template,
+        thingId: event.directive.endpoint.cookie.thingId,
+      },
+    }
+  }
+
+  return result
 }
 
-function minifyBackchannelEvent(event) {
+function minifyBackchannelEvent(event: VshClientBackchannelEvent) {
   return {
     rule: event.rule,
     thingId: event.thingId,
     endpointId: event.endpointId,
     causeType: event.causeType,
-    vshVersion: event.vshVersion,
+    vshVersion: event.vshVersion || '?.?.?',
   }
 }
 
@@ -92,7 +97,7 @@ export const skill = async function (event, context) {
       log.debug('RESPONSE: %j', response)
       return response
 
-    case 'ReportState': //deprecated
+    case 'ReportState':
       response = await handleReportState(event)
       log.debug('RESPONSE: %j', response)
       return response
