@@ -4,6 +4,7 @@ import * as cors from 'cors'
 import { v4 as uuidv4 } from 'uuid'
 import { encode, decode } from 'js-base64'
 import * as log from 'log'
+import * as logger from 'log-aws-lambda'
 
 import { fetchProfile, proactivelyUndiscoverDevices } from './helper'
 import AWS = require('aws-sdk')
@@ -16,6 +17,8 @@ import {
   isFeatureSupportedByClient,
   isLatestClientVersion,
 } from './version'
+
+logger()
 
 AWS.config.update({ region: process.env.VSH_IOT_REGION })
 
