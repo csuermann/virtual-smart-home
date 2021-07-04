@@ -149,7 +149,8 @@ async function killDeviceDueToOutdatedVersion({ thingId }) {
 }
 
 async function killDeviceWithMessage({ thingId, message }) {
-  await publish(`vsh/${thingId}/kill`, {
+  await publish(`vsh/${thingId}/service`, {
+    operation: 'kill',
     reason: message,
   })
 
