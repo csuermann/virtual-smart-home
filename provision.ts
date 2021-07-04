@@ -10,7 +10,7 @@ import { fetchProfile, proactivelyUndiscoverDevices } from './helper'
 import AWS = require('aws-sdk')
 
 import caCert from './caCert'
-import { deleteDevice, getDevicesOfUser } from './db'
+import { deleteDevice, getDevicesOfUser, getStoredTokenRecord } from './db'
 import { publish } from './mqtt'
 import {
   isAllowedClientVersion,
@@ -163,6 +163,14 @@ app.post('/provision', async function (req, res) {
   try {
     const profile = await fetchProfile(req.body.accessToken)
 
+    const { isBlocked } = await getStoredTokenRecord(profile.user_id)
+
+    if (isBlocked) {
+      throw new Error(
+        `found attribute 'isBlocked' for userId ${profile.user_id} / ${profile.email}`
+      )
+    }
+
     const { thingName, thingArn, thingId } = await createThing(
       profile.user_id,
       profile.email
@@ -196,7 +204,9 @@ app.post('/provision', async function (req, res) {
     res.send(response)
   } catch (e) {
     log.error('PROVISIONING FAILED: %s', e.message)
-    res.status(400).send({ error: 'provisioning failed' })
+    res
+      .status(400)
+      .send({ error: 'provisioning failed! VSH Alexa skill enabled?' })
   }
 })
 

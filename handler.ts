@@ -17,7 +17,7 @@ import {
 import handleDiscover from './handlers/discover'
 import handleAcceptGrant from './handlers/acceptGrant'
 import { handleDirective, handleReportState } from './handlers/updateState'
-import { deleteDevice, upsertDevice } from './db'
+import { deleteDevice, getStoredTokenRecord, upsertDevice } from './db'
 import { Device } from './Device'
 import { publish } from './mqtt'
 import { isAllowedClientVersion } from './version'
@@ -141,12 +141,19 @@ export const backchannel = async function (event, context) {
 }
 
 async function killDeviceDueToOutdatedVersion({ thingId }) {
-  await publish(`vsh/${thingId}/kill`, {
-    reason:
+  return await killDeviceWithMessage({
+    thingId,
+    message:
       "OUTDATED VERSION! Please update 'virtual smart home' package for Node-RED",
   })
+}
 
-  log.notice('killed thing %s due to outdated client version!', thingId)
+async function killDeviceWithMessage({ thingId, message }) {
+  await publish(`vsh/${thingId}/kill`, {
+    reason: message,
+  })
+
+  log.notice('killed thing %s with message: %s', thingId, message)
 
   return true
 }
@@ -258,12 +265,24 @@ async function handleRequestConfig({
   vshVersion: string
 }) {
   if (!isAllowedClientVersion(vshVersion)) {
-    return await killDeviceDueToOutdatedVersion({ thingId })
+    await killDeviceDueToOutdatedVersion({ thingId })
+    return false
   }
 
   const userId = await lookupUserIdForThing(thingId)
 
   if (!userId) {
+    await killDeviceWithMessage({
+      thingId,
+      message: 'User not found! VSH Alexa skill enabled?',
+    })
+    return false
+  }
+
+  const { isBlocked } = await getStoredTokenRecord(userId)
+
+  if (isBlocked) {
+    await killDeviceWithMessage({ thingId, message: 'User account is blocked' })
     return false
   }
 

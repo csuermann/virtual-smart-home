@@ -15,6 +15,7 @@ export interface TokenRecord {
   updatedAt?: string
   email?: string
   skillRegion?: string
+  isBlocked?: boolean
 }
 
 export async function fetchAccessAndRefreshToken(

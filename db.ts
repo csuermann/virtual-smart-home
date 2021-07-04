@@ -101,6 +101,8 @@ export async function getStoredTokenRecord(
     data.skillRegion = 'eu-west-1'
   }
 
+  data.isBlocked = !data.isBlocked ? false : true
+
   return data
 }
 
