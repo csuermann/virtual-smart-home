@@ -11,7 +11,11 @@ import AWS = require('aws-sdk')
 import caCert from './caCert'
 import { deleteDevice, getDevicesOfUser } from './db'
 import { publish } from './mqtt'
-import { isAllowedClientVersion, isLatestClientVersion } from './version'
+import {
+  isAllowedClientVersion,
+  isFeatureSupportedByClient,
+  isLatestClientVersion,
+} from './version'
 
 AWS.config.update({ region: process.env.VSH_IOT_REGION })
 
@@ -142,7 +146,7 @@ app.post('/provision', async function (req, res) {
 
   log.info('PROVISIONING REQUEST for client with version %s', vshVersion)
 
-  if (!isAllowedClientVersion(vshVersion)) {
+  if (!isFeatureSupportedByClient('provision', vshVersion)) {
     log.error(
       'PROVISIONING FAILED: %s does not satisfy version constraints!',
       vshVersion
