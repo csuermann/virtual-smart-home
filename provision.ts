@@ -191,6 +191,8 @@ app.post('/provision', async function (req, res) {
       thingId: thingName, // we use the thingName as ID from here on...
       email: profile.email,
     }
+
+    log.debug('PROVISIONING RESPONSE: %j', response)
     res.send(response)
   } catch (e) {
     log.error('PROVISIONING FAILED: %s', e.message)
@@ -199,6 +201,8 @@ app.post('/provision', async function (req, res) {
 })
 
 app.get('/check_version', async function (req, res) {
+  log.debug('/check_version with query: %j', req.query)
+
   const clientVersion: string = (req.query.version as string) || '0.0.0'
   const nodeRedVersion: string = (req.query.nr_version as string) || '0.0.0'
   const thingId: string = (req.query.thingId as string) || null
@@ -209,12 +213,15 @@ app.get('/check_version', async function (req, res) {
     ? ''
     : 'Please update to the latest version of VSH!'
 
-  res.send({
+  const response = {
     isAllowedVersion,
     isLatestVersion,
     updateHint,
     allowedDeviceCount: 100, //deprecated as of v2.8.0. Leave here for backwards compatibility
-  })
+  }
+
+  log.debug('RESPONSE: %j', response)
+  res.send(response)
 })
 
 app.get('/devices', async function (req, res) {
