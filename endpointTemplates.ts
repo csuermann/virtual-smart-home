@@ -404,6 +404,30 @@ export default {
       },
     ],
   },
+  DOORBELL_EVENT: {
+    endpointId: '<device.id>',
+    manufacturerName: 'virtual smart home',
+    description: 'virtual doorbell event source',
+    friendlyName: '<device.friendlyName>',
+    cookie: {},
+    additionalAttributes: {
+      manufacturer: 'virtual smart home',
+      model: 'virtual smart home',
+      serialNumber: '0000000',
+      firmwareVersion: '1.0.0',
+      softwareVersion: '1.0.0',
+      customIdentifier: '0000000',
+    },
+    displayCategories: ['DOORBELL'],
+    capabilities: [
+      {
+        type: 'AlexaInterface',
+        interface: 'Alexa.DoorbellEventSource',
+        version: '3',
+        proactivelyReported: true,
+      },
+    ],
+  },
   ENTERTAINMENT_DEVICE: {
     endpointId: '<device.id>',
     manufacturerName: 'virtual smart home',

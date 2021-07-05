@@ -13,6 +13,7 @@ import {
   pushAsyncResponseToAlexa,
   pushAsyncStateReportToAlexa,
   VshClientBackchannelEvent,
+  pushDoorbellPressEventToAlexa,
 } from './helper'
 import handleDiscover from './handlers/discover'
 import handleAcceptGrant from './handlers/acceptGrant'
@@ -220,7 +221,7 @@ export async function handleBackchannelBulkUndiscover({ thingId, devices }) {
 }
 
 async function handleChangeReport(event: VshClientBackchannelEvent) {
-  const { thingId, causeType, correlationToken, userIdToken } = event
+  const { template, thingId, causeType, correlationToken, userIdToken } = event
   let userId: string
 
   if (userIdToken && userIdToken === makeUserIdToken({ thingId, userId })) {
@@ -234,6 +235,15 @@ async function handleChangeReport(event: VshClientBackchannelEvent) {
     return false
   }
 
+  if (template === 'DOORBELL_EVENT_SOURCE') {
+    try {
+      return await pushDoorbellPressEventToAlexa(userId, event)
+    } catch (e) {
+      log.error('pushDoorbellPressEventToAlexa FAILED! %s', e.message)
+      return false
+    }
+  }
+
   if (causeType === 'VOICE_INTERACTION' && correlationToken) {
     try {
       return await pushAsyncResponseToAlexa(userId, event)
@@ -241,20 +251,22 @@ async function handleChangeReport(event: VshClientBackchannelEvent) {
       log.error('pushAsyncResponseToAlexa FAILED! %s', e.message)
       return false
     }
-  } else if (causeType === 'STATE_REPORT' && correlationToken) {
+  }
+
+  if (causeType === 'STATE_REPORT' && correlationToken) {
     try {
       return await pushAsyncStateReportToAlexa(userId, event)
     } catch (e) {
       log.error('pushAsyncStateReportToAlexa FAILED! %s', e.message)
       return false
     }
-  } else {
-    try {
-      return await pushChangeReportToAlexa(userId, event)
-    } catch (e) {
-      log.error('pushChangeReportToAlexa FAILED!! %s', e.message)
-      return false
-    }
+  }
+
+  try {
+    return await pushChangeReportToAlexa(userId, event)
+  } catch (e) {
+    log.error('pushChangeReportToAlexa FAILED!! %s', e.message)
+    return false
   }
 }
 

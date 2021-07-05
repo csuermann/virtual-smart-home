@@ -21,6 +21,7 @@ export enum CauseType {
 
 export type VshClientBackchannelEvent = {
   rule: string
+  template?: string //available as of v2.11.0
   thingId: string
   endpointId: string
   properties: [
@@ -312,6 +313,55 @@ export async function pushAsyncStateReportToAlexa(
   const response: AxiosResponse = await Axios.post(
     getEventGatewayUrl(skillRegion),
     alexaResponse,
+    {
+      validateStatus: (status) => status == 202, // throw if status code is not 202
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  )
+
+  return true
+}
+
+export async function pushDoorbellPressEventToAlexa(
+  userId: string,
+  event: VshClientBackchannelEvent
+) {
+  const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
+
+  let { endpointId, correlationToken } = event
+
+  const doorbellPressEvent = {
+    event: {
+      header: {
+        namespace: 'Alexa.DoorbellEventSource',
+        name: 'DoorbellPress',
+        messageId: uuidv4(),
+        correlationToken,
+        payloadVersion: '3',
+      },
+      endpoint: {
+        scope: {
+          type: 'BearerToken',
+          token: accessToken,
+        },
+        endpointId,
+      },
+      payload: {
+        cause: {
+          type: 'PHYSICAL_INTERACTION',
+        },
+        timestamp: new Date().toISOString(),
+      },
+    },
+  }
+
+  log.debug('ASYNC DOORBELL PRESS EVENT: %j', doorbellPressEvent)
+
+  const response: AxiosResponse = await Axios.post(
+    getEventGatewayUrl(skillRegion),
+    doorbellPressEvent,
     {
       validateStatus: (status) => status == 202, // throw if status code is not 202
       headers: {
