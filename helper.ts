@@ -328,6 +328,11 @@ export async function pushDoorbellPressEventToAlexa(
   userId: string,
   event: VshClientBackchannelEvent
 ) {
+  //ignore NOT_DETECTED (aka doorbell _not_ pressed)
+  if (event.properties[0].value === 'NOT_DETECTED') {
+    return false
+  }
+
   const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
 
   let { endpointId, correlationToken } = event
