@@ -404,7 +404,7 @@ export default {
       },
     ],
   },
-  DOORBELL_EVENT: {
+  DOORBELL_EVENT_SOURCE: {
     endpointId: '<device.id>',
     manufacturerName: 'virtual smart home',
     description: 'virtual doorbell event source',
