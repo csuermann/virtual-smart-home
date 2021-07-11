@@ -4,6 +4,7 @@ import * as semver from 'semver'
 const features = {
   reportState: '>=2.2.0',
   provision: '>=2.8.0',
+  msgRateLimiter: '>=2.12.0',
 }
 
 export function isAllowedClientVersion(clientVersion: string): boolean {

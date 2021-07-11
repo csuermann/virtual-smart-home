@@ -103,6 +103,8 @@ export async function getStoredTokenRecord(
 
   data.isBlocked = !data.isBlocked ? false : true
 
+  data.allowedDeviceCount = data.allowedDeviceCount ?? 100
+
   return data
 }
 

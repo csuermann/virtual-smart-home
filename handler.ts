@@ -21,7 +21,7 @@ import { handleDirective, handleReportState } from './handlers/updateState'
 import { deleteDevice, getStoredTokenRecord, upsertDevice } from './db'
 import { Device } from './Device'
 import { publish } from './mqtt'
-import { isAllowedClientVersion } from './version'
+import { isAllowedClientVersion, isFeatureSupportedByClient } from './version'
 
 logger()
 
@@ -293,24 +293,22 @@ async function handleRequestConfig({
     return false
   }
 
-  const { isBlocked } = await getStoredTokenRecord(userId)
+  const { isBlocked, allowedDeviceCount } = await getStoredTokenRecord(userId)
 
   if (isBlocked) {
     await killDeviceWithMessage({ thingId, message: 'User account is blocked' })
     return false
   }
 
-  await publish(`vsh/${thingId}/service`, {
+  const payload = {
     operation: 'overrideConfig',
     userIdToken: makeUserIdToken({ thingId, userId }),
-    allowedDeviceCount: 100,
-    //required for <= v2.11.0:
-    rateLimiter: [
-      { period: 1 * 60 * 1000, limit: 12, penalty: 0, repeat: 10 }, //for 10 min: Limit to 12 req / min
-      { period: 10 * 60 * 1000, limit: 5, penalty: 1 }, //afterward: Limit to 5 req / 10 min
-    ],
-    //required for >= v2.12.0:
-    msgRateLimiter: {
+    allowedDeviceCount,
+  }
+
+  if (isFeatureSupportedByClient('msgRateLimiter', vshVersion)) {
+    //>= v2.12.0
+    payload['msgRateLimiter'] = {
       profiles: {
         DEFAULT: {
           maxConcurrent: 1,
@@ -338,10 +336,10 @@ async function handleRequestConfig({
           minTime: 0,
           highWater: 0,
           strategy: 'OVERFLOW',
-          reservoir: 3, //TODO: 15
+          reservoir: 20,
           reservoirIncreaseInterval: 5 * 60 * 1000, //5 min
           reservoirIncreaseAmount: 2,
-          reservoirIncreaseMaximum: 5,
+          reservoirIncreaseMaximum: 10,
         },
         STATE_REPORT_DEFAULT: {
           maxConcurrent: 1,
@@ -361,8 +359,16 @@ async function handleRequestConfig({
         VOICE_INTERACTION_DEFAULT: 'VOICE_INTERACTION_DEFAULT',
         STATE_REPORT_DEFAULT: 'STATE_REPORT_DEFAULT',
       },
-    },
-  })
+    }
+  } else {
+    //<= v2.11.0:
+    payload['rateLimiter'] = [
+      { period: 1 * 60 * 1000, limit: 12, penalty: 0, repeat: 10 }, //for 10 min: Limit to 12 req / min
+      { period: 10 * 60 * 1000, limit: 5, penalty: 1 }, //afterward: Limit to 5 req / 10 min
+    ]
+  }
+
+  await publish(`vsh/${thingId}/service`, payload)
 
   return true
 }
