@@ -304,10 +304,64 @@ async function handleRequestConfig({
     operation: 'overrideConfig',
     userIdToken: makeUserIdToken({ thingId, userId }),
     allowedDeviceCount: 100,
+    //required for <= v2.11.0:
     rateLimiter: [
       { period: 1 * 60 * 1000, limit: 12, penalty: 0, repeat: 10 }, //for 10 min: Limit to 12 req / min
       { period: 10 * 60 * 1000, limit: 5, penalty: 1 }, //afterward: Limit to 5 req / 10 min
     ],
+    //required for >= v2.12.0:
+    msgRateLimiter: {
+      profiles: {
+        DEFAULT: {
+          maxConcurrent: 1,
+          minTime: 1000, //1 sec
+          highWater: 0,
+          strategy: 'BLOCK',
+          penalty: 30 * 1000, //30 sec
+          reservoir: 60,
+          reservoirIncreaseInterval: 60 * 1000, //60 sec
+          reservoirIncreaseAmount: 1,
+          reservoirIncreaseMaximum: 60,
+        },
+        PHYSICAL_INTERACTION_DEFAULT: {
+          maxConcurrent: 1,
+          minTime: 2500, //2.5 sec
+          highWater: 1,
+          strategy: 'LEAK',
+          reservoir: 30,
+          reservoirIncreaseInterval: 15 * 60 * 1000, //15 min
+          reservoirIncreaseAmount: 1,
+          reservoirIncreaseMaximum: 15,
+        },
+        VOICE_INTERACTION_DEFAULT: {
+          maxConcurrent: 1,
+          minTime: 0,
+          highWater: 0,
+          strategy: 'OVERFLOW',
+          reservoir: 3, //TODO: 15
+          reservoirIncreaseInterval: 5 * 60 * 1000, //5 min
+          reservoirIncreaseAmount: 2,
+          reservoirIncreaseMaximum: 5,
+        },
+        STATE_REPORT_DEFAULT: {
+          maxConcurrent: 1,
+          minTime: 0,
+          highWater: 0,
+          strategy: 'BLOCK',
+          penalty: 60 * 1000, //60 sec
+          reservoir: 60,
+          reservoirIncreaseInterval: 5 * 60 * 1000, //5 min
+          reservoirIncreaseAmount: 15,
+          reservoirIncreaseMaximum: 60,
+        },
+      },
+      profileMapping: {
+        //PHYSICAL_INTERACTION_DIMMER_SWITCH: 'DIMMER_SWITCH', //example of a template/device specific override
+        PHYSICAL_INTERACTION_DEFAULT: 'PHYSICAL_INTERACTION_DEFAULT',
+        VOICE_INTERACTION_DEFAULT: 'VOICE_INTERACTION_DEFAULT',
+        STATE_REPORT_DEFAULT: 'STATE_REPORT_DEFAULT',
+      },
+    },
   })
 
   return true
