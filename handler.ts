@@ -50,10 +50,10 @@ function minifyDirectiveEvent(event) {
 function minifyBackchannelEvent(event: VshClientBackchannelEvent) {
   return {
     rule: event.rule,
-    template: event.template || '?',
+    template: event.template, //optional
     thingId: event.thingId,
-    endpointId: event.endpointId,
-    causeType: event.causeType,
+    endpointId: event.endpointId, //optional
+    causeType: event.causeType, //optional
     vshVersion: event.vshVersion || '?.?.?',
   }
 }
