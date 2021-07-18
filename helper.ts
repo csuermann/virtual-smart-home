@@ -419,13 +419,6 @@ export async function proactivelyDiscoverDevices(
     )
     return true
   } catch (e) {
-    await publish(`vsh/${devices[0].thingId}/service`, {
-      operation: 'setDeviceStatus',
-      status: 'proactive discovery failed',
-      color: 'yellow',
-      devices: devices.map((device) => device.deviceId),
-    })
-
     throw new Error(
       `Request failed with status code ${
         e.response.status

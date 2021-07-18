@@ -191,6 +191,13 @@ async function handleBackchannelBulkDiscover(event) {
     return await proactivelyDiscoverDevices(userId, devicesToDiscover)
   } catch (e) {
     log.error('proactivelyDiscoverDevices FAILED! %s', e.message)
+
+    await publish(`vsh/${devicesToDiscover[0].thingId}/service`, {
+      operation: 'setDeviceStatus',
+      status: 'proactive discovery failed',
+      color: 'yellow',
+      devices: devicesToDiscover.map((device) => device.deviceId),
+    })
     return false
   }
 }
