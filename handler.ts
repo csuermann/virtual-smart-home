@@ -156,6 +156,11 @@ async function killDeviceWithMessage({ thingId, message }) {
     reason: message,
   })
 
+  //for clients < v2.x.x
+  await publish(`vsh/${thingId}/kill`, {
+    reason: message,
+  })
+
   log.notice('killed thing %s with message: %s', thingId, message)
 
   return true

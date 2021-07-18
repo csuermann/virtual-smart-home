@@ -250,7 +250,6 @@ Resources:
         AwsIotSqlVersion: '2016-03-23'
         Sql: >
           SELECT
-            'kill' AS operation,
             'outdated VSH version' AS reason
           FROM
             '$aws/things/+/shadow/update/accepted'
@@ -261,7 +260,7 @@ Resources:
         Actions:
           - Republish:
               Topic:
-                Fn::Join: ['', ['vsh/$', '{topic(3)}', '/service']]
+                Fn::Join: ['', ['vsh/$', '{topic(3)}', '/kill']]
               Qos: 1
               RoleArn:
                 Fn::GetAtt: [myIotRole, Arn]
