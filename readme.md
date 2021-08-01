@@ -78,6 +78,9 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 1. Create an IoT Billing Group called 'virtual-smart-home-billing-group'
 
    `aws iot create-billing-group --billing-group-name virtual-smart-home-billing-group`
+1. Update the IoT index configuration
+
+   `aws iot update-indexing-configuration --thing-indexing-configuration "thingIndexingMode=REGISTRY_AND_SHADOW, thingConnectivityIndexingMode=STATUS"`
 1. Create an environment variable called 'HASH_SECRET' containing a random string
 
    `export HASH_SECRET=foobar28429789`
@@ -90,7 +93,7 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 
    `aws lambda get-function --function-name virtual-smart-home-dev-skill`
 1. In the Alexa Developer Console click on 'Smart Home' in the side menu
-1. Paste the value of the FunctionArn (from step 21) as 'Default Endpoint' as well as for 'Europe / India'
+1. Paste the value of the FunctionArn (from step 22) as 'Default Endpoint' as well as for 'Europe / India'
 1. Click Save
 1. Your own backend should now be set up! Congratulations!
 
@@ -106,7 +109,7 @@ Now you need to configure your Node-RED vsh-connection node to use _your_ backen
 
 1. Restart Node-RED
 1. Create a new vsh node and chose 'add new vsh-connection' from the connection dropdown
-1. Replace the 'Backend URL' with the value you noted down in step 19, BUT WITHOUT THE trailing '/provision' !!!
+1. Replace the 'Backend URL' with the value you noted down in step 21, BUT WITHOUT THE trailing '/provision' !!!
 1. Replace 'LWA Client ID' with the value you noted down as 'Client Id' in step 6.12
 1. Click 'Add'
 1. Come back to the previous page by clicking the pen-icon
