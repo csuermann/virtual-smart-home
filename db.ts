@@ -9,7 +9,7 @@ export const docClient = new AWS.DynamoDB.DocumentClient({
   apiVersion: '2012-08-10',
 })
 
-export function upsertTokens(
+export function upsertTokens (
   { userId, accessToken, refreshToken, email, skillRegion }: TokenRecord,
   expiryInSec
 ): Promise<any> {
@@ -17,10 +17,14 @@ export function upsertTokens(
     'set updatedAt = :c, accessTokenExpiry = :e, accessToken = :a, refreshToken = :r, deleteAtUnixTime = :ttl'
   let ExpressionAttributeValues = {
     ':c': dayjs().toISOString(),
-    ':e': dayjs().add(expiryInSec, 'second').toISOString(),
+    ':e': dayjs()
+      .add(expiryInSec, 'second')
+      .toISOString(),
     ':a': accessToken,
     ':r': refreshToken,
-    ':ttl': dayjs().add(60, 'day').unix(),
+    ':ttl': dayjs()
+      .add(60, 'day')
+      .unix(),
   }
 
   if (email) {
@@ -54,7 +58,7 @@ export function upsertTokens(
   })
 }
 
-export async function getStoredTokenRecord(
+export async function getStoredTokenRecord (
   userId: string
 ): Promise<TokenRecord> {
   let params = {
@@ -98,7 +102,7 @@ export async function getStoredTokenRecord(
   }
 
   if (!data.skillRegion) {
-    data.skillRegion = 'eu-west-1'
+    data.skillRegion = process.env.VSH_IOT_REGION
   }
 
   data.isBlocked = !data.isBlocked ? false : true
@@ -108,7 +112,7 @@ export async function getStoredTokenRecord(
   return data
 }
 
-export function upsertDevice({
+export function upsertDevice ({
   userId,
   deviceId,
   friendlyName,
@@ -143,7 +147,7 @@ export function upsertDevice({
   })
 }
 
-export function deleteDevice({ userId, deviceId, thingId }): Promise<any> {
+export function deleteDevice ({ userId, deviceId, thingId }): Promise<any> {
   let params = {
     TableName: 'VSH',
     Key: {
@@ -168,7 +172,7 @@ export function deleteDevice({ userId, deviceId, thingId }): Promise<any> {
   })
 }
 
-export async function getDevicesOfUser(userId: string): Promise<Device[]> {
+export async function getDevicesOfUser (userId: string): Promise<Device[]> {
   let params = {
     TableName: 'VSH',
     KeyConditionExpression: 'PK = :pk and begins_with(SK, :sk)',
@@ -191,7 +195,7 @@ export async function getDevicesOfUser(userId: string): Promise<Device[]> {
   return devices as Device[]
 }
 
-export async function getDevicesOfThing(
+export async function getDevicesOfThing (
   userId: string,
   thingId: string
 ): Promise<Device[]> {
