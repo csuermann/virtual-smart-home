@@ -206,7 +206,9 @@ app.post('/provision', async function (req, res) {
     log.error('PROVISIONING FAILED: %s', e.message)
     res
       .status(400)
-      .send({ error: 'provisioning failed! VSH Alexa skill enabled?' })
+      .send({
+        error: 'provisioning failed! Try (re)-enabling the VSH Alexa skill!',
+      })
   }
 })
 
