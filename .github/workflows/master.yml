@@ -35,3 +35,4 @@ jobs:
           ALEXA_CLIENT_ID: ${{ secrets.ALEXA_CLIENT_ID }}
           ALEXA_CLIENT_SECRET: ${{ secrets.ALEXA_CLIENT_SECRET }}
           HASH_SECRET: ${{ secrets.HASH_SECRET }}
+          VSH_ADMIN_API_KEY: ${{ secrets.VSH_ADMIN_API_KEY }}
