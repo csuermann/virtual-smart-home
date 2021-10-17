@@ -1,17 +1,8 @@
 import * as serverless from 'serverless-http'
 import * as express from 'express'
-// import { v4 as uuidv4 } from 'uuid'
-// import { encode, decode } from 'js-base64'
-import * as log from 'log'
 import * as logger from 'log-aws-lambda'
-
-// import { fetchProfile, proactivelyUndiscoverDevices } from './helper'
 import AWS = require('aws-sdk')
 import { getDevicesOfUser, getStoredTokenRecord } from './db'
-
-// import caCert from './caCert'
-// import { deleteDevice, getDevicesOfUser, getStoredTokenRecord } from './db'
-// import { publish } from './mqtt'
 
 logger()
 
@@ -21,6 +12,7 @@ const iot = new AWS.Iot()
 const iotdata = new AWS.IotData({
   endpoint: process.env.VSH_IOT_ENDPOINT,
 })
+const cloudwatchlogs = new AWS.CloudWatchLogs()
 
 async function describeThing(
   thingName
@@ -81,6 +73,50 @@ async function listViolationEvents(
   })
 }
 
+async function startQuery(
+  queryString: string,
+  minutesBack: number,
+  logGroupName: string
+): Promise<string> {
+  const now = Math.ceil(new Date().valueOf() / 1000)
+  const startTime = now - minutesBack * 60
+  const params = {
+    endTime: now,
+    queryString,
+    startTime,
+    limit: 500,
+    logGroupName,
+  }
+
+  return new Promise((resolve, reject) => {
+    cloudwatchlogs.startQuery(params, function (err, data) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(data.queryId)
+      }
+    })
+  })
+}
+
+async function getQueryResult(
+  queryId: string
+): Promise<AWS.CloudWatchLogs.GetQueryResultsResponse> {
+  const params = {
+    queryId,
+  }
+
+  return new Promise((resolve, reject) => {
+    cloudwatchlogs.getQueryResults(params, function (err, data) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(data)
+      }
+    })
+  })
+}
+
 function makeTimestampsReadable(obj) {
   let newObj = {}
   for (var ogKey in obj) {
@@ -93,6 +129,12 @@ function makeTimestampsReadable(obj) {
     }
   }
   return newObj
+}
+
+async function wait(ms) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, ms)
+  })
 }
 
 // --------
@@ -170,7 +212,59 @@ app.get('/thing/:thingName/info', async function (req, res) {
   })
 })
 
-app.post('/thing/:thingId/blockUser', async function (req, res) {
+app.get('/thing/:thingName/stats', async function (req, res) {
+  const query = `stats count() as count by rule, endpointId, template, causeType
+    | filter thingId = '${req.params.thingName}'
+    | sort count desc
+    | limit 250`
+
+  try {
+    const queryId = await startQuery(
+      query,
+      60 * 24, //1 day
+      '/aws/lambda/virtual-smart-home-dev-backchannel'
+    )
+
+    type QueryStatusType =
+      | 'Scheduled'
+      | 'Running'
+      | 'Complete'
+      | 'Failed'
+      | 'Cancelled'
+      | 'Timeout'
+      | 'Unknown'
+    let queryStatus: QueryStatusType
+    let queryResult: AWS.CloudWatchLogs.GetQueryResultsResponse
+
+    do {
+      await wait(1000)
+      queryResult = await getQueryResult(queryId)
+      queryStatus = (queryResult.status as QueryStatusType) ?? 'Unknown'
+    } while (queryStatus == 'Running' || queryStatus == 'Scheduled')
+
+    if (queryStatus !== 'Complete') {
+      throw new Error('Query did not complete successfully')
+    }
+
+    const rows = queryResult.results.map((row) =>
+      row.reduce((acc, item) => {
+        acc[item.field] =
+          item.field == 'count' ? parseInt(item.value) : item.value
+        return acc
+      }, {})
+    )
+
+    res.send({
+      results: rows,
+      matches: queryResult.statistics.recordsMatched,
+    })
+  } catch (err) {
+    console.log(err)
+    res.status(500).send(err.message)
+  }
+})
+
+app.post('/thing/:thingName/blockUser', async function (req, res) {
   res.status(500).send('not yet implemented')
 })
 

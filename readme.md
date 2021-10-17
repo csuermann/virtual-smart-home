@@ -83,9 +83,10 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
    `aws iot update-indexing-configuration --thing-indexing-configuration "thingIndexingMode=REGISTRY_AND_SHADOW, thingConnectivityIndexingMode=STATUS"`
 
    > NOTE: See [AWS pricing for IoT Device Management](https://aws.amazon.com/iot-device-management/pricing/). Performing this step is not strictly needed to get VSH up and running. If you do not want to enable thing indexing, consider commenting out the `metrics` endpoint in serverless.yml to prevent your CloudWatch logs from being flooded with error messages.
-1. Create an environment variable called 'HASH_SECRET' containing a random string
+1. Create 2 environment variable called 'HASH_SECRET' and 'VSH_ADMIN_API_KEY' containing random strings
 
    `export HASH_SECRET=foobar28429789`
+   `export VSH_ADMIN_API_KEY=unguessable8823472893472`
 1. run `npm install`
 1. install the serverless framework by running `npm install -g serverless`
 1. run `serverless deploy`

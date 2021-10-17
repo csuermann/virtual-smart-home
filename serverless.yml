@@ -35,6 +35,8 @@ provider:
     - Effect: Allow
       Action:
         - cloudwatch:PutMetricData
+        - logs:StartQuery
+        - logs:GetQueryResults
       Resource:
         - '*'
 
@@ -113,6 +115,7 @@ functions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: admin.admin
     maximumRetryAttempts: 0
+    timeout: 25
     environment:
       VSH_ADMIN_API_KEY: ${env:VSH_ADMIN_API_KEY}
     events:
