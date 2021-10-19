@@ -546,17 +546,18 @@ export default {
       },
       {
         type: 'AlexaInterface',
-        interface: 'Alexa.EndpointHealth',
+        interface: 'Alexa.PlaybackController',
         version: '3',
-        properties: {
-          supported: [
-            {
-              name: 'connectivity',
-            },
-          ],
-          proactivelyReported: true,
-          retrievable: true,
-        },
+        supportedOperations: [
+          'Play',
+          'Pause',
+          'Stop',
+          'StartOver',
+          'Previous',
+          'Next',
+          'Rewind',
+          'FastForward',
+        ],
       },
       {
         type: 'AlexaInterface',
