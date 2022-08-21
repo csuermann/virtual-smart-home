@@ -6,7 +6,7 @@ plugins:
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs16.x
   region: eu-west-1 #eu-west-1, us-east-1, us-west-2
   stage: dev
   memorySize: 256
