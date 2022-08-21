@@ -237,8 +237,11 @@ async function handleChangeReport(event: VshClientBackchannelEvent) {
   const { template, thingId, causeType, correlationToken, userIdToken } = event
   let userId: string
 
-  if (userIdToken && userIdToken === makeUserIdToken({ thingId, userId })) {
-    userId = userIdToken.match(/^(.*)#.*/)[1]
+  if (userIdToken) {
+    const extractedUserId = userIdToken.match(/^(.*)#.*/)[1]
+    if (userIdToken === makeUserIdToken({ thingId, userId: extractedUserId })) {
+      userId = extractedUserId
+    }
   } else {
     //fallback for < v2.8.0
     userId = await lookupUserIdForThing(thingId)
