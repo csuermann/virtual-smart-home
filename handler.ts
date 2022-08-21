@@ -255,7 +255,7 @@ async function handleChangeReport(event: VshClientBackchannelEvent) {
     try {
       return await pushDoorbellPressEventToAlexa(userId, event)
     } catch (e) {
-      log.error('pushDoorbellPressEventToAlexa FAILED! %s', e.message)
+      log.error('pushDoorbellPressEventToAlexa FAILED! %s', e.toJSON())
       return false
     }
   }
