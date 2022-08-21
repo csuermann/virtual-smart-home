@@ -338,12 +338,13 @@ export async function pushDoorbellPressEventToAlexa(
   let { endpointId, correlationToken } = event
 
   const doorbellPressEvent = {
+    context: {},
     event: {
       header: {
         namespace: 'Alexa.DoorbellEventSource',
         name: 'DoorbellPress',
         messageId: uuidv4(),
-        correlationToken,
+        //correlationToken,
         payloadVersion: '3',
       },
       endpoint: {
