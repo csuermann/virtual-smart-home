@@ -335,7 +335,7 @@ export async function pushDoorbellPressEventToAlexa(
 
   const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
 
-  let { endpointId, correlationToken } = event
+  let { endpointId } = event
 
   const doorbellPressEvent = {
     context: {},
@@ -344,7 +344,6 @@ export async function pushDoorbellPressEventToAlexa(
         namespace: 'Alexa.DoorbellEventSource',
         name: 'DoorbellPress',
         messageId: uuidv4(),
-        //correlationToken,
         payloadVersion: '3',
       },
       endpoint: {
