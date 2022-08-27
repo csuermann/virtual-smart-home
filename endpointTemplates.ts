@@ -27,7 +27,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
         capabilityResources: {
           friendlyNames: [
@@ -120,7 +120,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -157,7 +157,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -171,7 +171,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -185,7 +185,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -199,7 +199,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -213,7 +213,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -250,7 +250,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -264,7 +264,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -301,7 +301,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -315,7 +315,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -329,7 +329,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -366,7 +366,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -380,7 +380,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -394,7 +394,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -455,7 +455,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
         inputs: [
           { name: 'AUX 1' },
@@ -512,7 +512,7 @@ export default {
               name: 'muted',
             },
           ],
-          retrievable: true,
+          retrievable: false,
           proactivelyReported: true,
         },
       },
@@ -527,7 +527,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -541,7 +541,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -625,7 +625,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
         configuration: {
           supportedRange: {
@@ -742,7 +742,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -779,7 +779,7 @@ export default {
               name: 'mode',
             },
           ],
-          retrievable: true,
+          retrievable: false,
           proactivelyReported: true,
         },
         capabilityResources: {
@@ -885,7 +885,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -922,7 +922,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -959,7 +959,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -973,7 +973,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -1010,7 +1010,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -1024,7 +1024,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -1082,7 +1082,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -1096,7 +1096,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -1133,7 +1133,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -1147,7 +1147,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -1176,7 +1176,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {
@@ -1199,7 +1199,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
         configuration: {
           supportedModes: ['AUTO', 'HEAT', 'COOL', 'ECO', 'OFF'],
@@ -1217,7 +1217,7 @@ export default {
             },
           ],
           proactivelyReported: true,
-          retrievable: true,
+          retrievable: false,
         },
       },
       {

@@ -204,11 +204,9 @@ app.post('/provision', async function (req, res) {
     res.send(response)
   } catch (e) {
     log.error('PROVISIONING FAILED: %s', e.message)
-    res
-      .status(400)
-      .send({
-        error: 'provisioning failed! Try (re)-enabling the VSH Alexa skill!',
-      })
+    res.status(400).send({
+      error: 'provisioning failed! Try (re)-enabling the VSH Alexa skill!',
+    })
   }
 })
 
@@ -229,7 +227,7 @@ app.get('/check_version', async function (req, res) {
     isAllowedVersion,
     isLatestVersion,
     updateHint,
-    allowedDeviceCount: 100, //deprecated as of v2.8.0. Leave here for backwards compatibility
+    allowedDeviceCount: 7, //deprecated as of v2.8.0. Leave here for backwards compatibility
   }
 
   log.debug('RESPONSE: %j', response)
