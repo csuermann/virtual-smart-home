@@ -18,7 +18,12 @@ import {
 import handleDiscover from './handlers/discover'
 import handleAcceptGrant from './handlers/acceptGrant'
 import { handleDirective, handleReportState } from './handlers/updateState'
-import { deleteDevice, getStoredTokenRecord, upsertDevice } from './db'
+import {
+  deleteDevice,
+  getDeviceCountOfUser,
+  getStoredTokenRecord,
+  upsertDevice,
+} from './db'
 import { Device } from './Device'
 import { publish } from './mqtt'
 import { isAllowedClientVersion, isFeatureSupportedByClient } from './version'
@@ -319,10 +324,21 @@ async function handleRequestConfig({
       return false
     }
 
+    // calculate count of devices connected via _other_ thingIDs
+    const deviceCountOfOtherThings = await getDeviceCountOfUser({
+      userId,
+      excludeThingId: thingId,
+    })
+
+    const allowedDeviceCountForThisThing =
+      allowedDeviceCount - deviceCountOfOtherThings < 0
+        ? 0
+        : allowedDeviceCount - deviceCountOfOtherThings
+
     const payload = {
       operation: 'overrideConfig',
       userIdToken: makeUserIdToken({ thingId, userId }),
-      allowedDeviceCount,
+      allowedDeviceCount: allowedDeviceCountForThisThing,
     }
 
     if (isFeatureSupportedByClient('msgRateLimiter', vshVersion)) {

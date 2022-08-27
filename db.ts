@@ -191,6 +191,18 @@ export async function getDevicesOfUser(userId: string): Promise<Device[]> {
   return devices as Device[]
 }
 
+export async function getDeviceCountOfUser({
+  userId,
+  excludeThingId,
+}: {
+  userId: string
+  excludeThingId: string
+}): Promise<number> {
+  return (await getDevicesOfUser(userId)).filter(
+    (device) => device.thingId !== excludeThingId
+  ).length
+}
+
 export async function getDevicesOfThing(
   userId: string,
   thingId: string
