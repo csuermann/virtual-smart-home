@@ -7,7 +7,7 @@ import { getEndpointsForDevices } from './handlers/discover'
 
 import AWS = require('aws-sdk')
 import { Device } from './Device'
-import { publish } from './mqtt'
+import { Plan, PlanName } from './Plan'
 
 AWS.config.update({ region: process.env.VSH_IOT_REGION })
 
@@ -383,9 +383,15 @@ export async function proactivelyDiscoverDevices(
   userId: string,
   devices: Device[]
 ) {
-  const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
+  const {
+    accessToken,
+    skillRegion,
+    plan: planName,
+  } = await getStoredTokenRecord(userId)
 
-  const endpoints = getEndpointsForDevices(devices)
+  const plan = new Plan(planName as PlanName)
+
+  const endpoints = getEndpointsForDevices(devices, plan.asRetrievable)
 
   const addOrUpdateReport = {
     event: {

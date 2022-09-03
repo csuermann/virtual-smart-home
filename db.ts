@@ -2,6 +2,7 @@ import * as AWS from 'aws-sdk'
 import dayjs = require('dayjs')
 import { fetchFreshAccessToken, TokenRecord } from './Authorization'
 import { Device } from './Device'
+import { Plan, PlanName } from './Plan'
 
 AWS.config.update({ region: process.env.VSH_IOT_REGION })
 
@@ -103,7 +104,12 @@ export async function getStoredTokenRecord(
 
   data.isBlocked = !data.isBlocked ? false : true
 
-  data.allowedDeviceCount = data.allowedDeviceCount ?? 7
+  data.plan = data.plan ?? PlanName.free
+
+  if (!data.allowedDeviceCount) {
+    const plan = new Plan(data.plan as PlanName)
+    data.allowedDeviceCount = plan.allowedDeviceCount
+  }
 
   return data
 }

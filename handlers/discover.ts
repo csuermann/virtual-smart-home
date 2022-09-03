@@ -1,13 +1,14 @@
-import { getDevicesOfUser } from '../db'
+import { getDevicesOfUser, getStoredTokenRecord } from '../db'
 import { Device } from '../Device'
 import endpointTemplates from '../endpointTemplates'
+import { Plan, PlanName } from '../Plan'
 
-function getEndpointForDevice(device: Device) {
-  if (!endpointTemplates[device.template]) {
+function getEndpointForDevice(device: Device, asRetrievable: boolean) {
+  if (!endpointTemplates(asRetrievable)[device.template]) {
     return false
   }
 
-  const template = { ...endpointTemplates[device.template] }
+  const template = { ...endpointTemplates(asRetrievable)[device.template] }
 
   template.endpointId = device.deviceId
   template.friendlyName = device.friendlyName
@@ -20,9 +21,12 @@ function getEndpointForDevice(device: Device) {
   return template
 }
 
-export function getEndpointsForDevices(devices: Device[]) {
+export function getEndpointsForDevices(
+  devices: Device[],
+  asRetrievable: boolean
+) {
   return devices.reduce((acc, curr) => {
-    const endpoint = getEndpointForDevice(curr)
+    const endpoint = getEndpointForDevice(curr, asRetrievable)
 
     if (endpoint) {
       acc.push(endpoint)
@@ -34,6 +38,9 @@ export function getEndpointsForDevices(devices: Device[]) {
 
 export default async function handleDiscover(event) {
   const devices = await getDevicesOfUser(event.profile.user_id)
+  const tokenRecord = await getStoredTokenRecord(event.profile.user_id)
+  const plan = new Plan(tokenRecord.plan as PlanName)
+
   return {
     event: {
       header: {
@@ -43,7 +50,7 @@ export default async function handleDiscover(event) {
         messageId: event.directive.header.messageId + '-R',
       },
       payload: {
-        endpoints: getEndpointsForDevices(devices),
+        endpoints: getEndpointsForDevices(devices, plan.asRetrievable),
       },
     },
   }

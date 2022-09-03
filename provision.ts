@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { encode, decode } from 'js-base64'
 import * as log from 'log'
 import * as logger from 'log-aws-lambda'
+import * as jwt from 'jsonwebtoken'
 
 import { fetchProfile, proactivelyUndiscoverDevices } from './helper'
 import AWS = require('aws-sdk')
@@ -17,6 +18,11 @@ import {
   isFeatureSupportedByClient,
   isLatestClientVersion,
 } from './version'
+import { Plan, PlanName } from './Plan'
+
+interface AuthenticatedRequest extends express.Request {
+  userId: string
+}
 
 logger()
 
@@ -190,6 +196,15 @@ app.post('/provision', async function (req, res) {
 
     await addThingToThingGroup(thingName, 'virtual-smart-home-things')
 
+    const vshJwt = jwt.sign(
+      {
+        thingId: thingName,
+        email: profile.email,
+        sub: profile.user_id,
+      },
+      process.env.HASH_SECRET
+    )
+
     const response = {
       server: process.env.VSH_IOT_ENDPOINT, //'a1pv0eq8s016ut-ats.iot.eu-west-1.amazonaws.com'
       port: 8883,
@@ -198,6 +213,7 @@ app.post('/provision', async function (req, res) {
       caCert: encode(caCert),
       thingId: thingName, // we use the thingName as ID from here on...
       email: profile.email,
+      vshJwt,
     }
 
     log.debug('PROVISIONING RESPONSE: %j', response)
@@ -223,29 +239,56 @@ app.get('/check_version', async function (req, res) {
     ? ''
     : 'Please update to the latest version of VSH!'
 
+  const freePlan = new Plan(PlanName.free)
+
   const response = {
     isAllowedVersion,
     isLatestVersion,
     updateHint,
-    allowedDeviceCount: 7, //deprecated as of v2.8.0. Leave here for backwards compatibility
+    allowedDeviceCount: freePlan.allowedDeviceCount, //deprecated as of v2.8.0. Leave here for backwards compatibility
   }
 
   log.debug('RESPONSE: %j', response)
   res.send(response)
 })
 
-app.get('/devices', async function (req, res) {
+const needsAuth = async function (
+  req: AuthenticatedRequest,
+  res: express.Response,
+  next: express.NextFunction
+) {
   if (!req.header('Authorization')) {
-    res
+    return res
       .status(400)
       .send({ error: 'missing accessToken in Authorization header' })
   }
 
-  try {
-    const accessToken = req.header('Authorization')
-    const { user_id } = await fetchProfile(accessToken)
-    const devices = await getDevicesOfUser(user_id)
+  const accessToken: string = req.header('Authorization')
 
+  try {
+    if (accessToken.startsWith('Bearer ')) {
+      //new way of authentication via vsh JWT!
+      const decodedJwt = jwt.verify(
+        accessToken.substring(7),
+        process.env.HASH_SECRET
+      ) as jwt.JwtPayload
+      req.userId = decodedJwt.sub
+      next()
+    } else {
+      //deprecated way of authentication via Amazon access token!
+      const { user_id } = await fetchProfile(accessToken)
+      req.userId = user_id
+      next()
+    }
+  } catch (e) {
+    log.error('AUTHENTICATION FAILED: %s', e.message)
+    res.status(400).send({ error: 'authentication failed' })
+  }
+}
+
+app.get('/devices', needsAuth, async function (req: AuthenticatedRequest, res) {
+  try {
+    const devices = await getDevicesOfUser(req.userId)
     res.send(devices)
   } catch (e) {
     log.error('FETCHING DEVICE LIST FAILED: %s', e.message)
@@ -253,44 +296,40 @@ app.get('/devices', async function (req, res) {
   }
 })
 
-app.delete('/device', async function (req, res) {
-  if (!req.header('Authorization')) {
-    return res
-      .status(400)
-      .send({ error: 'missing accessToken in Authorization header' })
-  }
-
-  if (!req.body.thingId || !req.body.deviceId) {
-    return res
-      .status(400)
-      .send({ error: 'missing thingId or deviceId in body' })
-  }
-
-  try {
-    const accessToken = req.header('Authorization')
-    const { user_id } = await fetchProfile(accessToken)
-    const deleteResult = await deleteDevice({
-      userId: user_id,
-      deviceId: req.body.deviceId,
-      thingId: req.body.thingId,
-    })
-
-    //make sure that the device was really deleted from db (as this is guarded with userId)
-    if (deleteResult.Attributes.deviceId == req.body.deviceId) {
-      //..only then delete the shadow
-      await publish(
-        `$aws/things/${req.body.thingId}/shadow/name/${req.body.deviceId}/delete`,
-        {}
-      )
-
-      //tell Alexa that the device was deleted, too:
-      await proactivelyUndiscoverDevices(user_id, [req.body.deviceId])
+app.delete(
+  '/device',
+  needsAuth,
+  async function (req: AuthenticatedRequest, res) {
+    if (!req.body.thingId || !req.body.deviceId) {
+      return res
+        .status(400)
+        .send({ error: 'missing thingId or deviceId in body' })
     }
 
-    res.send({ status: 'OK' })
-  } catch (e) {
-    res.status(400).send({ error: 'operation failed' })
+    try {
+      const deleteResult = await deleteDevice({
+        userId: req.userId,
+        deviceId: req.body.deviceId,
+        thingId: req.body.thingId,
+      })
+
+      //make sure that the device was really deleted from db (as this is guarded with userId)
+      if (deleteResult.Attributes.deviceId == req.body.deviceId) {
+        //..only then delete the shadow
+        await publish(
+          `$aws/things/${req.body.thingId}/shadow/name/${req.body.deviceId}/delete`,
+          {}
+        )
+
+        //tell Alexa that the device was deleted, too:
+        await proactivelyUndiscoverDevices(req.userId, [req.body.deviceId])
+      }
+
+      res.send({ status: 'OK' })
+    } catch (e) {
+      res.status(400).send({ error: 'operation failed' })
+    }
   }
-})
+)
 
 export const provision = serverless(app)
