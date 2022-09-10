@@ -2,7 +2,7 @@ import Axios, { AxiosResponse, AxiosError } from 'axios'
 import { v4 as uuidv4 } from 'uuid'
 import * as log from 'log'
 
-import { getStoredTokenRecord } from './db'
+import { getUserRecord } from './db'
 import { getEndpointsForDevices } from './handlers/discover'
 
 import AWS = require('aws-sdk')
@@ -113,7 +113,7 @@ export async function pushChangeReportToAlexa(
   userId: string,
   event: VshClientBackchannelEvent
 ) {
-  const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
+  const { accessToken, skillRegion } = await getUserRecord(userId)
 
   let { endpointId, properties, causeType } = event
 
@@ -197,7 +197,7 @@ export async function pushAsyncResponseToAlexa(
   userId: string,
   event: VshClientBackchannelEvent
 ) {
-  const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
+  const { accessToken, skillRegion } = await getUserRecord(userId)
 
   let { endpointId, properties, correlationToken } = event
 
@@ -262,7 +262,7 @@ export async function pushAsyncStateReportToAlexa(
   userId: string,
   event: VshClientBackchannelEvent
 ) {
-  const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
+  const { accessToken, skillRegion } = await getUserRecord(userId)
 
   let { endpointId, properties, correlationToken } = event
 
@@ -333,7 +333,7 @@ export async function pushDoorbellPressEventToAlexa(
     return false
   }
 
-  const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
+  const { accessToken, skillRegion } = await getUserRecord(userId)
 
   let { endpointId } = event
 
@@ -386,7 +386,7 @@ export async function proactivelyDiscoverDevices(
     accessToken,
     skillRegion,
     plan: planName,
-  } = await getStoredTokenRecord(userId)
+  } = await getUserRecord(userId)
 
   const plan = new Plan(planName as PlanName)
 
@@ -437,7 +437,7 @@ export async function proactivelyUndiscoverDevices(
   userId: string,
   deviceIds: string[]
 ) {
-  const { accessToken, skillRegion } = await getStoredTokenRecord(userId)
+  const { accessToken, skillRegion } = await getUserRecord(userId)
   const endpoints = deviceIds.map((deviceId) => ({
     endpointId: deviceId,
   }))

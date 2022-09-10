@@ -7,7 +7,7 @@ export interface AccessTokenResponse {
   expires_in: number
 }
 
-export interface TokenRecord {
+export interface UserRecord {
   userId: string
   accessToken: string
   refreshToken: string

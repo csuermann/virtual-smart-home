@@ -2,7 +2,7 @@ import * as serverless from 'serverless-http'
 import * as express from 'express'
 import * as logger from 'log-aws-lambda'
 import AWS = require('aws-sdk')
-import { getDevicesOfUser, getStoredTokenRecord } from './db'
+import { getDevicesOfUser, getUserRecord } from './db'
 
 logger()
 
@@ -162,7 +162,7 @@ app.get('/thing/:thingName/info', async function (req, res) {
   try {
     thingDetails = await describeThing(req.params.thingName)
     thingShadow = await getThingShadow(req.params.thingName)
-    account = await getStoredTokenRecord(thingDetails.attributes['userId'])
+    account = await getUserRecord(thingDetails.attributes['userId'])
     devicesOfUser = await getDevicesOfUser(thingDetails.attributes['userId'])
     devices = devicesOfUser.reduce((acc, device) => {
       const key =

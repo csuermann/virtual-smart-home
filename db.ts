@@ -1,6 +1,6 @@
 import * as AWS from 'aws-sdk'
 import dayjs = require('dayjs')
-import { fetchFreshAccessToken, TokenRecord } from './Authorization'
+import { fetchFreshAccessToken, UserRecord } from './Authorization'
 import { Device } from './Device'
 import { Plan, PlanName } from './Plan'
 
@@ -11,7 +11,7 @@ export const docClient = new AWS.DynamoDB.DocumentClient({
 })
 
 export function upsertTokens(
-  { userId, accessToken, refreshToken, email, skillRegion }: TokenRecord,
+  { userId, accessToken, refreshToken, email, skillRegion }: UserRecord,
   expiryInSec
 ): Promise<any> {
   let UpdateExpression =
@@ -55,9 +55,10 @@ export function upsertTokens(
   })
 }
 
-export async function getStoredTokenRecord(
-  userId: string
-): Promise<TokenRecord> {
+export async function getUserRecord(
+  userId: string,
+  refreshAccessToken: boolean = true
+): Promise<UserRecord> {
   let params = {
     TableName: 'VSH',
     Key: {
@@ -80,22 +81,24 @@ export async function getStoredTokenRecord(
     })
   })
 
-  const now = dayjs()
-  const tokenExpiry = dayjs(data.accessTokenExpiry).subtract(15, 'second')
+  if (refreshAccessToken) {
+    const now = dayjs()
+    const tokenExpiry = dayjs(data.accessTokenExpiry).subtract(15, 'second')
 
-  if (tokenExpiry.isBefore(now)) {
-    const newTokens = await fetchFreshAccessToken(data.refreshToken)
+    if (tokenExpiry.isBefore(now)) {
+      const newTokens = await fetchFreshAccessToken(data.refreshToken)
 
-    await upsertTokens(
-      {
-        userId,
-        accessToken: newTokens.access_token,
-        refreshToken: newTokens.refresh_token,
-      },
-      newTokens.expires_in
-    )
+      await upsertTokens(
+        {
+          userId,
+          accessToken: newTokens.access_token,
+          refreshToken: newTokens.refresh_token,
+        },
+        newTokens.expires_in
+      )
 
-    data.accessToken = newTokens.access_token
+      data.accessToken = newTokens.access_token
+    }
   }
 
   if (!data.skillRegion) {

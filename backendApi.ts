@@ -11,7 +11,7 @@ import { fetchProfile, proactivelyUndiscoverDevices } from './helper'
 import AWS = require('aws-sdk')
 
 import caCert from './caCert'
-import { deleteDevice, getDevicesOfUser, getStoredTokenRecord } from './db'
+import { deleteDevice, getDevicesOfUser, getUserRecord } from './db'
 import { publish } from './mqtt'
 import {
   isAllowedClientVersion,
@@ -169,7 +169,7 @@ app.post('/provision', async function (req, res) {
   try {
     const profile = await fetchProfile(req.body.accessToken)
 
-    const { isBlocked } = await getStoredTokenRecord(profile.user_id)
+    const { isBlocked } = await getUserRecord(profile.user_id)
 
     if (isBlocked) {
       throw new Error(
@@ -285,6 +285,19 @@ const needsAuth = async function (
     res.status(400).send({ error: 'authentication failed' })
   }
 }
+
+app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
+  try {
+    const { allowedDeviceCount, plan } = await getUserRecord(req.userId, false)
+    res.send({
+      allowedDeviceCount,
+      plan,
+    })
+  } catch (e) {
+    log.error('FETCHING PLAN INFO FAILED: %s', e.message)
+    res.status(400).send({ error: 'fetching plan info failed' })
+  }
+})
 
 app.get('/devices', needsAuth, async function (req: AuthenticatedRequest, res) {
   try {

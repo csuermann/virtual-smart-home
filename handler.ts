@@ -21,7 +21,7 @@ import { handleDirective, handleReportState } from './handlers/updateState'
 import {
   deleteDevice,
   getDeviceCountOfUser,
-  getStoredTokenRecord,
+  getUserRecord,
   upsertDevice,
 } from './db'
 import { Device } from './Device'
@@ -314,7 +314,7 @@ async function handleRequestConfig({
   }
 
   try {
-    const { isBlocked, allowedDeviceCount } = await getStoredTokenRecord(userId)
+    const { isBlocked, allowedDeviceCount } = await getUserRecord(userId)
 
     if (isBlocked) {
       await killDeviceWithMessage({

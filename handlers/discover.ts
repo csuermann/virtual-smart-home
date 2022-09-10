@@ -1,4 +1,4 @@
-import { getDevicesOfUser, getStoredTokenRecord } from '../db'
+import { getDevicesOfUser, getUserRecord } from '../db'
 import { Device } from '../Device'
 import endpointTemplates from '../endpointTemplates'
 import { Plan, PlanName } from '../Plan'
@@ -38,7 +38,7 @@ export function getEndpointsForDevices(
 
 export default async function handleDiscover(event) {
   const devices = await getDevicesOfUser(event.profile.user_id)
-  const tokenRecord = await getStoredTokenRecord(event.profile.user_id)
+  const tokenRecord = await getUserRecord(event.profile.user_id)
   const plan = new Plan(tokenRecord.plan as PlanName)
 
   return {
