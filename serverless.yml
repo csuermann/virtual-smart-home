@@ -84,10 +84,10 @@ functions:
     events:
       - schedule: cron(0/15 * * * ? *)
 
-  provision:
+  backendApi:
     regions:
       - ${self:provider.environment.VSH_IOT_REGION}
-    handler: provision.provision
+    handler: backendApi.server
     maximumRetryAttempts: 0
     environment:
       VSH_IOT_POLICY:
@@ -107,6 +107,10 @@ functions:
           cors: true
       - http:
           path: check_version
+          method: get
+          cors: true
+      - http:
+          path: subscription
           method: get
           cors: true
 

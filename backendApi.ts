@@ -332,4 +332,4 @@ app.delete(
   }
 )
 
-export const provision = serverless(app)
+export const server = serverless(app)
