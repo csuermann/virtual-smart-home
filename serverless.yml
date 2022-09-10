@@ -56,7 +56,8 @@ functions:
     #memorySize: 200
     maximumRetryAttempts: 0
     events:
-      - alexaSmartHome: ${env:SKILL_ID}
+      - alexaSmartHome:
+          appId: ${env:SKILL_ID}
 
   backchannel:
     regions:
