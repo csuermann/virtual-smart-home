@@ -111,7 +111,7 @@ functions:
           method: get
           cors: true
       - http:
-          path: subscription
+          path: plan
           method: get
           cors: true
 
