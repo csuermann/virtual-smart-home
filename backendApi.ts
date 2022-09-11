@@ -292,6 +292,20 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
     res.send({
       allowedDeviceCount,
       plan,
+      availablePlans: [
+        {
+          name: 'VSH Pro',
+          features: [
+            'control up to 200 virtual devices',
+            'device status queryable from Alexa app',
+            'cancellable at any time',
+          ],
+          priceTags: [
+            { name: 'vsh-pro-yearly', tag: '12 EUR per year' },
+            { name: 'vsh-pro-monthly', tag: '1.49 EUR per month' },
+          ],
+        },
+      ],
     })
   } catch (e) {
     log.error('FETCHING PLAN INFO FAILED: %s', e.message)
