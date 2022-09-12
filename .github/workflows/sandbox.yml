@@ -37,3 +37,4 @@ jobs:
           ALEXA_CLIENT_SECRET: ${{ secrets.ALEXA_CLIENT_SECRET_SANDBOX }}
           HASH_SECRET: ${{ secrets.HASH_SECRET_SANDBOX }}
           VSH_ADMIN_API_KEY: ${{ secrets.VSH_ADMIN_API_KEY_SANDBOX }}
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY_SANDBOX }}

@@ -6,6 +6,7 @@ import { encode, decode } from 'js-base64'
 import * as log from 'log'
 import * as logger from 'log-aws-lambda'
 import * as jwt from 'jsonwebtoken'
+import Stripe from 'stripe'
 
 import { fetchProfile, proactivelyUndiscoverDevices } from './helper'
 import AWS = require('aws-sdk')
@@ -20,8 +21,13 @@ import {
 } from './version'
 import { Plan, PlanName } from './Plan'
 
+const stripe = new Stripe(process.env.STRIPE_API_KEY, {
+  apiVersion: '2022-08-01',
+})
+
 interface AuthenticatedRequest extends express.Request {
   userId: string
+  jwt?: { [key: string]: any }
 }
 
 logger()
@@ -286,6 +292,34 @@ const needsAuth = async function (
   }
 }
 
+const needsTokenForAudience = function (audience: string) {
+  return function (
+    req: AuthenticatedRequest,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
+    if (!req.query.token) {
+      return res.status(400).send({ error: 'missing query parameter: token' })
+    }
+
+    try {
+      const decodedJwt = jwt.verify(
+        req.query.token as string,
+        process.env.HASH_SECRET,
+        {
+          audience,
+        }
+      ) as jwt.JwtPayload
+      req.userId = decodedJwt.sub
+      req.jwt = decodedJwt
+      next()
+    } catch (e) {
+      log.error('AUTHENTICATION FAILED: %s', e.message)
+      res.status(400).send({ error: 'authentication failed' })
+    }
+  }
+}
+
 app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
   try {
     const { allowedDeviceCount, plan } = await getUserRecord(req.userId, false)
@@ -316,7 +350,7 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
                 {
                   aud: 'checkout',
                   sub: req.userId,
-                  product: 'vsh-pro-yearly',
+                  priceId: 'price_1LgSpdC3eSYquofeNk3MClG1',
                 },
                 process.env.HASH_SECRET,
                 { expiresIn: '30m' }
@@ -329,7 +363,7 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
                 {
                   aud: 'checkout',
                   sub: req.userId,
-                  product: 'vsh-pro-monthly',
+                  priceId: 'price_1LgSpdC3eSYquofegmyiZdQv',
                 },
                 process.env.HASH_SECRET,
                 { expiresIn: '30m' }
@@ -343,6 +377,35 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
     log.error('FETCHING PLAN INFO FAILED: %s', e.message)
     res.status(400).send({ error: 'fetching plan info failed' })
   }
+})
+
+app.get(
+  '/checkout',
+  needsTokenForAudience('checkout'),
+  async function (req: AuthenticatedRequest, res) {
+    //init Stripe checkout session and redirect to their checkout experience
+    const stripeSession = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [
+        {
+          price: req.jwt.priceId,
+          quantity: 1,
+        },
+      ],
+      // {CHECKOUT_SESSION_ID} is a string literal; do not change it!
+      // the actual Session ID is returned in the query parameter when your customer
+      // is redirected to the success page.
+      success_url: `https://${req.hostname}/dev/stripe_redirect?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `https://${req.hostname}/dev/stripe_redirect?cancelled=true`,
+    })
+
+    // Redirect to the URL returned on the Checkout Session.
+    res.redirect(303, stripeSession.url)
+  }
+)
+app.get('/stripe_redirect', async function (req: AuthenticatedRequest, res) {
+  //users get redirected to this endpoint after completing or cancelling the Stripe checkout flow!
+  res.send('Thank you! You can now close this window.')
 })
 
 app.get('/devices', needsAuth, async function (req: AuthenticatedRequest, res) {

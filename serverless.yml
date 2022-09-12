@@ -93,6 +93,7 @@ functions:
     environment:
       VSH_IOT_POLICY:
         Ref: 'vshClientPolicy2'
+      STRIPE_API_KEY: ${env:STRIPE_API_KEY}
     events:
       - http:
           path: provision
@@ -114,6 +115,18 @@ functions:
           path: plan
           method: get
           cors: true
+      - http:
+          path: checkout
+          method: get
+          cors: false
+      - http:
+          path: subscription
+          method: get
+          cors: false
+      - http:
+          path: stripe_redirect
+          method: get
+          cors: false
 
   admin:
     regions:
