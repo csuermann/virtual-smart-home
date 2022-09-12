@@ -292,6 +292,14 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
     res.send({
       allowedDeviceCount,
       plan,
+      subcriptionToken: jwt.sign(
+        {
+          aud: 'subscription',
+          sub: req.userId,
+        },
+        process.env.HASH_SECRET,
+        { expiresIn: '30m' }
+      ),
       availablePlans: [
         {
           name: 'VSH Pro',
@@ -301,8 +309,32 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
             'cancellable at any time',
           ],
           priceTags: [
-            { name: 'vsh-pro-yearly', tag: '12 EUR per year' },
-            { name: 'vsh-pro-monthly', tag: '1.49 EUR per month' },
+            {
+              name: 'vsh-pro-yearly',
+              tag: '12 EUR per year',
+              checkoutToken: jwt.sign(
+                {
+                  aud: 'checkout',
+                  sub: req.userId,
+                  product: 'vsh-pro-yearly',
+                },
+                process.env.HASH_SECRET,
+                { expiresIn: '30m' }
+              ),
+            },
+            {
+              name: 'vsh-pro-monthly',
+              tag: '1.49 EUR per month',
+              checkoutToken: jwt.sign(
+                {
+                  aud: 'checkout',
+                  sub: req.userId,
+                  product: 'vsh-pro-monthly',
+                },
+                process.env.HASH_SECRET,
+                { expiresIn: '30m' }
+              ),
+            },
           ],
         },
       ],
