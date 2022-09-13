@@ -162,7 +162,11 @@ app.post(
     let event: any
 
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret)
+      event = stripe.webhooks.constructEvent(
+        (req as any).rawBody,
+        sig,
+        endpointSecret
+      )
     } catch (err) {
       res.status(400).send(`Webhook Error: ${err.message}`)
       return
