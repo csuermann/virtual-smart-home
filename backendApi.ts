@@ -419,7 +419,7 @@ app.get('/stripe_redirect', async function (req: AuthenticatedRequest, res) {
   res.send('Thank you! You can now close this window.')
 })
 
-app.get(
+app.post(
   '/stripe_webhook',
   express.raw({ type: 'application/json' }),
   async function (req, res) {
