@@ -152,6 +152,44 @@ async function addThingToThingGroup(
 
 const app = express()
 
+app.post(
+  '/stripe_webhook',
+  express.raw({ type: 'application/json' }),
+  async function (req, res) {
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
+    const sig = req.headers['stripe-signature']
+
+    let event: any
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret)
+    } catch (err) {
+      res.status(400).send(`Webhook Error: ${err.message}`)
+      return
+    }
+
+    // Handle the event
+    switch (event.type) {
+      case 'checkout.session.completed': //https://stripe.com/docs/api/checkout/sessions/object
+        await handleCheckoutSessionCompleted(event.data.object)
+        break
+      case 'customer.subscription.deleted': //https://stripe.com/docs/api/subscriptions/object
+        await handleCustomerSubscriptionDeleted(event.data.object)
+        break
+      case 'invoice.payment_failed': //https://stripe.com/docs/api/invoices/object
+        await handleInvoicePaymentFailed(event.data.object)
+        break
+      // ... handle other event types
+      default:
+        console.log(`Unhandled event type ${event.type}`)
+    }
+
+    // Return a 200 response to acknowledge receipt of the event
+    res.send()
+  }
+)
+
+//applying middlewares for all endpoints below these lines!
 app.use(cors())
 app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 app.use(express.json()) // for parsing application/json
@@ -418,43 +456,6 @@ app.get('/stripe_redirect', async function (req: AuthenticatedRequest, res) {
   //users get redirected to this endpoint after completing or cancelling the Stripe checkout flow!
   res.send('Thank you! You can now close this window.')
 })
-
-app.post(
-  '/stripe_webhook',
-  express.raw({ type: 'application/json' }),
-  async function (req, res) {
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
-    const sig = req.headers['stripe-signature']
-
-    let event: any
-
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret)
-    } catch (err) {
-      res.status(400).send(`Webhook Error: ${err.message}`)
-      return
-    }
-
-    // Handle the event
-    switch (event.type) {
-      case 'checkout.session.completed': //https://stripe.com/docs/api/checkout/sessions/object
-        await handleCheckoutSessionCompleted(event.data.object)
-        break
-      case 'customer.subscription.deleted': //https://stripe.com/docs/api/subscriptions/object
-        await handleCustomerSubscriptionDeleted(event.data.object)
-        break
-      case 'invoice.payment_failed': //https://stripe.com/docs/api/invoices/object
-        await handleInvoicePaymentFailed(event.data.object)
-        break
-      // ... handle other event types
-      default:
-        console.log(`Unhandled event type ${event.type}`)
-    }
-
-    // Return a 200 response to acknowledge receipt of the event
-    res.send()
-  }
-)
 
 app.get('/devices', needsAuth, async function (req: AuthenticatedRequest, res) {
   try {
