@@ -37,3 +37,4 @@ jobs:
           HASH_SECRET: ${{ secrets.HASH_SECRET }}
           VSH_ADMIN_API_KEY: ${{ secrets.VSH_ADMIN_API_KEY }}
           STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}

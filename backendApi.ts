@@ -20,6 +20,11 @@ import {
   isLatestClientVersion,
 } from './version'
 import { Plan, PlanName } from './Plan'
+import {
+  handleCheckoutSessionCompleted,
+  handleCustomerSubscriptionDeleted,
+  handleInvoicePaymentFailed,
+} from './subscription'
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY, {
   apiVersion: '2022-08-01',
@@ -245,7 +250,7 @@ app.get('/check_version', async function (req, res) {
     ? ''
     : 'Please update to the latest version of VSH!'
 
-  const freePlan = new Plan(PlanName.free)
+  const freePlan = new Plan(PlanName.FREE)
 
   const response = {
     isAllowedVersion,
@@ -383,9 +388,14 @@ app.get(
   '/checkout',
   needsTokenForAudience('checkout'),
   async function (req: AuthenticatedRequest, res) {
+    const { stripeCustomerId, email } = await getUserRecord(req.userId)
+
     //init Stripe checkout session and redirect to their checkout experience
     const stripeSession = await stripe.checkout.sessions.create({
       mode: 'subscription',
+      client_reference_id: req.userId,
+      ...(stripeCustomerId && { customer: stripeCustomerId }), //include customer property if stripeCustomerId is truthy
+      customer_email: email,
       line_items: [
         {
           price: req.jwt.priceId,
@@ -403,10 +413,48 @@ app.get(
     res.redirect(303, stripeSession.url)
   }
 )
+
 app.get('/stripe_redirect', async function (req: AuthenticatedRequest, res) {
   //users get redirected to this endpoint after completing or cancelling the Stripe checkout flow!
   res.send('Thank you! You can now close this window.')
 })
+
+app.get(
+  '/stripe_webhook',
+  express.raw({ type: 'application/json' }),
+  async function (req, res) {
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
+    const sig = req.headers['stripe-signature']
+
+    let event: any
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret)
+    } catch (err) {
+      res.status(400).send(`Webhook Error: ${err.message}`)
+      return
+    }
+
+    // Handle the event
+    switch (event.type) {
+      case 'checkout.session.completed': //https://stripe.com/docs/api/checkout/sessions/object
+        await handleCheckoutSessionCompleted(event.data.object)
+        break
+      case 'customer.subscription.deleted': //https://stripe.com/docs/api/subscriptions/object
+        await handleCustomerSubscriptionDeleted(event.data.object)
+        break
+      case 'invoice.payment_failed': //https://stripe.com/docs/api/invoices/object
+        await handleInvoicePaymentFailed(event.data.object)
+        break
+      // ... handle other event types
+      default:
+        console.log(`Unhandled event type ${event.type}`)
+    }
+
+    // Return a 200 response to acknowledge receipt of the event
+    res.send()
+  }
+)
 
 app.get('/devices', needsAuth, async function (req: AuthenticatedRequest, res) {
   try {

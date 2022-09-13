@@ -94,6 +94,7 @@ functions:
       VSH_IOT_POLICY:
         Ref: 'vshClientPolicy2'
       STRIPE_API_KEY: ${env:STRIPE_API_KEY}
+      STRIPE_WEBHOOK_SECRET: ${env:STRIPE_WEBHOOK_SECRET}
     events:
       - http:
           path: provision
@@ -126,6 +127,10 @@ functions:
       - http:
           path: stripe_redirect
           method: get
+          cors: false
+      - http:
+          path: stripe_webhook
+          method: post
           cors: false
 
   admin:

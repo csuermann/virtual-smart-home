@@ -1,6 +1,6 @@
 export enum PlanName {
-  free = 'free',
-  pro = 'pro',
+  FREE = 'free',
+  PRO = 'pro',
 }
 
 export class Plan {
@@ -9,11 +9,11 @@ export class Plan {
 
   constructor(public readonly planName: PlanName) {
     switch (planName) {
-      case PlanName.pro:
+      case PlanName.PRO:
         this.allowedDeviceCount = 200
         this.asRetrievable = true
         break
-      case PlanName.free:
+      case PlanName.FREE:
       default:
         this.allowedDeviceCount = 7
         this.asRetrievable = false

@@ -1,6 +1,10 @@
 import * as AWS from 'aws-sdk'
 import dayjs = require('dayjs')
-import { fetchFreshAccessToken, UserRecord } from './Authorization'
+import {
+  fetchFreshAccessToken,
+  PartialUserRecord,
+  UserRecord,
+} from './Authorization'
 import { Device } from './Device'
 import { Plan, PlanName } from './Plan'
 
@@ -38,6 +42,48 @@ export function upsertTokens(
     TableName: 'VSH',
     Key: {
       PK: `USER#${userId}`,
+      SK: 'TOKEN',
+    },
+    UpdateExpression,
+    ExpressionAttributeValues,
+  }
+
+  return new Promise((resolve, reject) => {
+    docClient.update(params, function (err, data) {
+      if (err) {
+        return reject(err)
+      } else {
+        return resolve(data)
+      }
+    })
+  })
+}
+
+export function updateUserRecord(partialUser: PartialUserRecord): Promise<any> {
+  const updateRec = { ...partialUser }
+
+  delete updateRec.userId
+
+  updateRec.updatedAt = dayjs().toISOString()
+
+  const UpdateExpression =
+    'set ' +
+    Object.keys(updateRec)
+      .map((field, idx) => `${field} = :f${idx}`)
+      .join(', ')
+
+  const ExpressionAttributeValues = Object.keys(updateRec).reduce(
+    (acc, attrName, idx) => {
+      acc[`:f${idx}`] = updateRec[attrName]
+      return acc
+    },
+    {}
+  )
+
+  const params = {
+    TableName: 'VSH',
+    Key: {
+      PK: `USER#${partialUser.userId}`,
       SK: 'TOKEN',
     },
     UpdateExpression,
@@ -107,7 +153,7 @@ export async function getUserRecord(
 
   data.isBlocked = !data.isBlocked ? false : true
 
-  data.plan = data.plan ?? PlanName.free
+  data.plan = data.plan ?? PlanName.FREE
 
   if (!data.allowedDeviceCount) {
     const plan = new Plan(data.plan as PlanName)

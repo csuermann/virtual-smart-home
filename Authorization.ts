@@ -18,7 +18,10 @@ export interface UserRecord {
   isBlocked?: boolean
   allowedDeviceCount?: number
   plan?: string
+  stripeCustomerId?: string
 }
+
+export type PartialUserRecord = Pick<UserRecord, 'userId'> & Partial<UserRecord>
 
 export async function fetchAccessAndRefreshToken(
   event
