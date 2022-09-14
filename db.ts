@@ -69,12 +69,20 @@ export function updateUserRecord(partialUser: PartialUserRecord): Promise<any> {
   const UpdateExpression =
     'set ' +
     Object.keys(updateRec)
-      .map((field, idx) => `${field} = :f${idx}`)
+      .map((_field, idx) => `#n${idx} = :v${idx}`)
       .join(', ')
+
+  const ExpressionAttributeNames = Object.keys(updateRec).reduce(
+    (acc, attrName, idx) => {
+      acc[`#n${idx}`] = attrName
+      return acc
+    },
+    {}
+  )
 
   const ExpressionAttributeValues = Object.keys(updateRec).reduce(
     (acc, attrName, idx) => {
-      acc[`:f${idx}`] = updateRec[attrName]
+      acc[`:v${idx}`] = updateRec[attrName]
       return acc
     },
     {}
@@ -87,6 +95,7 @@ export function updateUserRecord(partialUser: PartialUserRecord): Promise<any> {
       SK: 'TOKEN',
     },
     UpdateExpression,
+    ExpressionAttributeNames,
     ExpressionAttributeValues,
   }
 
