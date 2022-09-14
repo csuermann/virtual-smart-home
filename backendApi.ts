@@ -159,9 +159,9 @@ app.post('/stripe_webhook', async function (req, res) {
   let event: any
 
   try {
-    log.info('/stripe_webhook: req: %O', req)
     log.info('/stripe_webhook: rawBody: %s', (req as any).rawBody)
     log.info('/stripe_webhook: sig: %s', sig)
+    log.info('/stripe_webhook: endpointSecret: %s', endpointSecret)
     event = stripe.webhooks.constructEvent(
       (req as any).rawBody,
       sig,
