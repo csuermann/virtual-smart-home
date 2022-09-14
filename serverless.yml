@@ -13,13 +13,14 @@ provider:
   logRetentionInDays: 3
 
   environment:
+    NODE_ENV: ${env:NODE_ENV}
     VSH_IOT_REGION: 'eu-west-1'
     VSH_IOT_ENDPOINT: ${env:IOT_ENDPOINT}
     ALEXA_CLIENT_ID: ${env:ALEXA_CLIENT_ID}
     ALEXA_CLIENT_SECRET: ${env:ALEXA_CLIENT_SECRET}
     HASH_SECRET: ${env:HASH_SECRET}
     LOG_LEVEL: ${env:LOG_LEVEL}
-    VSH_LATEST_CLIENT_VERSION: '2.13.0'
+    VSH_LATEST_CLIENT_VERSION: '3.0.0'
 
   iamRoleStatements:
     - Effect: Allow

@@ -2,7 +2,7 @@ import Axios, { AxiosResponse, AxiosError } from 'axios'
 import { v4 as uuidv4 } from 'uuid'
 import * as log from 'log'
 
-import { getUserRecord } from './db'
+import { getDevicesOfUser, getUserRecord } from './db'
 import { getEndpointsForDevices } from './handlers/discover'
 
 import AWS = require('aws-sdk')
@@ -38,7 +38,7 @@ export type VshClientBackchannelEvent = {
   vshVersion?: string //available as of v2.8.2
 }
 
-function getEventGatewayUrl(region) {
+export function getEventGatewayUrl(region) {
   switch (region.toLowerCase()) {
     case 'eu-west-1':
       return 'https://api.eu.amazonalexa.com/v3/events'
@@ -378,6 +378,11 @@ export async function pushDoorbellPressEventToAlexa(
   return true
 }
 
+export async function proactivelyRediscoverAllDevices(userId: string) {
+  const devices = await getDevicesOfUser(userId)
+  return await proactivelyDiscoverDevices(userId, devices)
+}
+
 export async function proactivelyDiscoverDevices(
   userId: string,
   devices: Device[]
@@ -503,4 +508,8 @@ export async function describeThing(thingId: string): Promise<any> {
       }
     })
   })
+}
+
+export function isProd() {
+  return process.env.NODE_ENV === 'production'
 }

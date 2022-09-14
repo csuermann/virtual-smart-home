@@ -1,4 +1,3 @@
-import { String } from 'aws-sdk/clients/cloudhsm'
 import * as semver from 'semver'
 
 const features = {
@@ -8,7 +7,7 @@ const features = {
 }
 
 export function isAllowedClientVersion(clientVersion: string): boolean {
-  return semver.satisfies(clientVersion, '>=2.0.0')
+  return semver.satisfies(clientVersion, '>=2.13.1') //v2.13.1 was released 2021-10-19
 }
 
 export function isLatestClientVersion(clientVersion: string): boolean {

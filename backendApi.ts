@@ -8,7 +8,7 @@ import * as logger from 'log-aws-lambda'
 import * as jwt from 'jsonwebtoken'
 import Stripe from 'stripe'
 
-import { fetchProfile, proactivelyUndiscoverDevices } from './helper'
+import { fetchProfile, isProd, proactivelyUndiscoverDevices } from './helper'
 import AWS = require('aws-sdk')
 
 import caCert from './caCert'
@@ -160,7 +160,7 @@ app.post('/stripe_webhook', async function (req, res) {
 
   try {
     event = stripe.webhooks.constructEvent(
-      (req as any).rawBody,
+      (req as any).rawBody, //rawBody is important!
       sig,
       endpointSecret
     )
@@ -393,7 +393,9 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
                 {
                   aud: 'checkout',
                   sub: req.userId,
-                  priceId: 'price_1LgSpdC3eSYquofeNk3MClG1',
+                  priceId: isProd()
+                    ? 'price_1Li1C4C3eSYquofeqstbOGi9'
+                    : 'price_1LgSpdC3eSYquofeNk3MClG1',
                 },
                 process.env.HASH_SECRET,
                 { expiresIn: '30m' }
@@ -406,7 +408,9 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
                 {
                   aud: 'checkout',
                   sub: req.userId,
-                  priceId: 'price_1LgSpdC3eSYquofegmyiZdQv',
+                  priceId: isProd()
+                    ? 'price_1Li1C4C3eSYquofekuqBmkqk'
+                    : 'price_1LgSpdC3eSYquofegmyiZdQv',
                 },
                 process.env.HASH_SECRET,
                 { expiresIn: '30m' }

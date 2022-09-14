@@ -292,3 +292,10 @@ export async function getDevicesOfThing(
 
   return devices as Device[]
 }
+
+export async function getThingsOfUser(userId: string) {
+  const things: Set<string> = new Set()
+  const devices = await getDevicesOfUser(userId)
+
+  return [...devices.reduce((acc, curr) => acc.add(curr.thingId), things)]
+}

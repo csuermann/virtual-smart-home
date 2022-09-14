@@ -1,6 +1,8 @@
 import * as log from 'log'
 import Stripe from 'stripe'
-import { updateUserRecord } from './db'
+import { getThingsOfUser, updateUserRecord } from './db'
+import { proactivelyRediscoverAllDevices } from './helper'
+import { publish } from './mqtt'
 import { PlanName } from './Plan'
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY, {
@@ -23,7 +25,18 @@ export async function switchToPlan(
 
   await updateUserRecord(userRec)
 
-  log.info('switched user %s to plan %s', userId, plan)
+  log.info('switched user [%s] to plan [%s]', userId, plan)
+
+  //push potentially updated device config to Alexa:
+  await proactivelyRediscoverAllDevices(userId)
+
+  //send 'restart' service msg to all things of user:
+  const thingIds = await getThingsOfUser(userId)
+  for (const thingId of thingIds) {
+    await publish(`vsh/${thingId}/service`, {
+      operation: 'restart',
+    })
+  }
 }
 
 export async function handleCheckoutSessionCompleted({
