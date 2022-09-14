@@ -154,7 +154,6 @@ const app = express()
 
 app.post(
   '/stripe_webhook',
-  express.raw({ type: 'application/json' }),
   async function (req, res) {
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
     const sig = req.headers['stripe-signature']
@@ -162,7 +161,7 @@ app.post(
     let event: any
 
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret)
+      event = stripe.webhooks.constructEvent((req as any).rawBody, sig, endpointSecret)
     } catch (err) {
       res.status(400).send(`Webhook Error: ${err.message}`)
       return
@@ -503,4 +502,7 @@ app.delete(
   }
 )
 
-export const server = serverless(app)
+export const server = serverless(app, {
+  request(request, event, _context) {
+    request.rawBody = event.rawBody;
+  }})

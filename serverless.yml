@@ -132,11 +132,10 @@ functions:
           path: stripe_webhook
           method: post
           cors: false
-          integration: lambda
           request:
             template:
               application/json:
-                '{ "rawbody": "$util.escapeJavaScript($input.body)",
+                '{ "rawBody": "$util.escapeJavaScript($input.body)",
                 "headers": {
                 #foreach($header in $input.params().header.keySet())
                 "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
