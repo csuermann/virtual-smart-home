@@ -436,7 +436,7 @@ app.get(
       mode: 'subscription',
       client_reference_id: req.userId,
       ...(stripeCustomerId && { customer: stripeCustomerId }), //include customer property if stripeCustomerId is truthy
-      customer_email: email,
+      ...(!stripeCustomerId && { customer_email: email }), //include customer_email property if stripeCustomerId is falsy
       line_items: [
         {
           price: req.jwt.priceId,
