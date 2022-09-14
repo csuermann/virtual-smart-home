@@ -13,7 +13,7 @@ provider:
   logRetentionInDays: 3
 
   environment:
-    NODE_ENV: ${env:NODE_ENV}
+    IS_PROD: ${env:IS_PROD}
     VSH_IOT_REGION: 'eu-west-1'
     VSH_IOT_ENDPOINT: ${env:IOT_ENDPOINT}
     ALEXA_CLIENT_ID: ${env:ALEXA_CLIENT_ID}
