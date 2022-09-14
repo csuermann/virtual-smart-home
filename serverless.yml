@@ -132,15 +132,6 @@ functions:
           path: stripe_webhook
           method: post
           cors: false
-          request:
-            template:
-              application/json:
-                '{ "rawBody": "$util.escapeJavaScript($input.body)",
-                "headers": {
-                #foreach($header in $input.params().header.keySet())
-                "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
-                #end
-                } }'
 
   admin:
     regions:
