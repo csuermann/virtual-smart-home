@@ -511,5 +511,7 @@ export async function describeThing(thingId: string): Promise<any> {
 }
 
 export function isProd() {
+  log.info('process.env.NODE_ENV: [%s]', process.env.NODE_ENV)
+  log.info('isProd() returns [%s]', process.env.NODE_ENV === 'production')
   return process.env.NODE_ENV === 'production'
 }
