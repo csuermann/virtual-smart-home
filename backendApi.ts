@@ -160,6 +160,8 @@ app.post('/stripe_webhook', async function (req, res) {
 
   try {
     log.info('/stripe_webhook: req: %O', req)
+    log.info('/stripe_webhook: rawBody: %s', (req as any).rawBody)
+    log.info('/stripe_webhook: sig: %s', sig)
     event = stripe.webhooks.constructEvent(
       (req as any).rawBody,
       sig,
@@ -509,6 +511,6 @@ export const server = serverless(app, {
     log.info('### request ### %O', request)
     log.info('### event ### %O', event)
     log.info('### context ### %O', context)
-    request.rawBody = event.rawBody
+    request.rawBody = event.body
   },
 })
