@@ -152,42 +152,43 @@ async function addThingToThingGroup(
 
 const app = express()
 
-app.post(
-  '/stripe_webhook',
-  async function (req, res) {
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
-    const sig = req.headers['stripe-signature']
+app.post('/stripe_webhook', async function (req, res) {
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
+  const sig = req.headers['stripe-signature']
 
-    let event: any
+  let event: any
 
-    try {
-      log.info("/stripe_webhook: req: %O", req)
-      event = stripe.webhooks.constructEvent((req as any).rawBody, sig, endpointSecret)
-    } catch (err) {
-      res.status(400).send(`Webhook Error: ${err.message}`)
-      return
-    }
-
-    // Handle the event
-    switch (event.type) {
-      case 'checkout.session.completed': //https://stripe.com/docs/api/checkout/sessions/object
-        await handleCheckoutSessionCompleted(event.data.object)
-        break
-      case 'customer.subscription.deleted': //https://stripe.com/docs/api/subscriptions/object
-        await handleCustomerSubscriptionDeleted(event.data.object)
-        break
-      case 'invoice.payment_failed': //https://stripe.com/docs/api/invoices/object
-        await handleInvoicePaymentFailed(event.data.object)
-        break
-      // ... handle other event types
-      default:
-        console.log(`Unhandled event type ${event.type}`)
-    }
-
-    // Return a 200 response to acknowledge receipt of the event
-    res.send()
+  try {
+    log.info('/stripe_webhook: req: %O', req)
+    event = stripe.webhooks.constructEvent(
+      (req as any).rawBody,
+      sig,
+      endpointSecret
+    )
+  } catch (err) {
+    res.status(400).send(`Webhook Error: ${err.message}`)
+    return
   }
-)
+
+  // Handle the event
+  switch (event.type) {
+    case 'checkout.session.completed': //https://stripe.com/docs/api/checkout/sessions/object
+      await handleCheckoutSessionCompleted(event.data.object)
+      break
+    case 'customer.subscription.deleted': //https://stripe.com/docs/api/subscriptions/object
+      await handleCustomerSubscriptionDeleted(event.data.object)
+      break
+    case 'invoice.payment_failed': //https://stripe.com/docs/api/invoices/object
+      await handleInvoicePaymentFailed(event.data.object)
+      break
+    // ... handle other event types
+    default:
+      console.log(`Unhandled event type ${event.type}`)
+  }
+
+  // Return a 200 response to acknowledge receipt of the event
+  res.send()
+})
 
 //applying middlewares for all endpoints below these lines!
 app.use(cors())
@@ -504,6 +505,10 @@ app.delete(
 )
 
 export const server = serverless(app, {
-  request(request, event, _context) {
-    request.rawBody = event.rawBody;
-  }})
+  request(request, event, context) {
+    log.info('### request ### %O', request)
+    log.info('### event ### %O', event)
+    log.info('### context ### %O', context)
+    request.rawBody = event.rawBody
+  },
+})
