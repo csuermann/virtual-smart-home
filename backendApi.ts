@@ -159,9 +159,6 @@ app.post('/stripe_webhook', async function (req, res) {
   let event: any
 
   try {
-    log.info('/stripe_webhook: rawBody: %s', (req as any).rawBody)
-    log.info('/stripe_webhook: sig: %s', sig)
-    log.info('/stripe_webhook: endpointSecret: %s', endpointSecret)
     event = stripe.webhooks.constructEvent(
       (req as any).rawBody,
       sig,
@@ -455,9 +452,28 @@ app.get(
   }
 )
 
+app.get(
+  '/subscription',
+  needsTokenForAudience('subscription'),
+  async function (req: AuthenticatedRequest, res) {
+    const { stripeCustomerId } = await getUserRecord(req.userId)
+
+    //init Stripe customer portal session and redirect to there
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: stripeCustomerId,
+      return_url: `https://${req.hostname}/dev/stripe_redirect`,
+    })
+
+    // Redirect to the URL returned on the portal session.
+    res.redirect(303, portalSession.url)
+  }
+)
+
 app.get('/stripe_redirect', async function (req: AuthenticatedRequest, res) {
   //users get redirected to this endpoint after completing or cancelling the Stripe checkout flow!
-  res.send('Thank you! You can now close this window.')
+  res.send(
+    '<html><h1>Thank you!</h1><h2>You can now close this window.</h2></html>'
+  )
 })
 
 app.get('/devices', needsAuth, async function (req: AuthenticatedRequest, res) {
@@ -507,10 +523,7 @@ app.delete(
 )
 
 export const server = serverless(app, {
-  request(request, event, context) {
-    log.info('### request ### %O', request)
-    log.info('### event ### %O', event)
-    log.info('### context ### %O', context)
+  request(request, event, _context) {
     request.rawBody = event.body
   },
 })
