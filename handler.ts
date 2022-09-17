@@ -186,6 +186,7 @@ async function handleBackchannelBulkDiscover(event) {
       thingId: event.thingId,
       friendlyName: deviceStub['friendlyName'],
       template: deviceStub['template'],
+      retrievable: deviceStub['retrievable'] ?? false,
     }
 
     devicesToDiscover.push(device)
@@ -223,6 +224,7 @@ export async function handleBackchannelBulkUndiscover({ thingId, devices }) {
       thingId: thingId,
       friendlyName: deviceStub['friendlyName'],
       template: deviceStub['template'],
+      retrievable: deviceStub['retrievable'] ?? false,
     }
 
     devicesToUndiscover.push(device)

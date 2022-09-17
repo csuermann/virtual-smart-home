@@ -23,9 +23,10 @@ function getEndpointForDevice(device: Device, asRetrievable: boolean) {
 
 export function getEndpointsForDevices(
   devices: Device[],
-  asRetrievable: boolean
+  asRetrievableAllowed: boolean
 ) {
   return devices.reduce((acc, curr) => {
+    const asRetrievable = asRetrievableAllowed && curr.retrievable
     const endpoint = getEndpointForDevice(curr, asRetrievable)
 
     if (endpoint) {

@@ -177,6 +177,7 @@ export function upsertDevice({
   deviceId,
   friendlyName,
   template,
+  retrievable,
   thingId,
 }): Promise<any> {
   let params = {
@@ -186,10 +187,11 @@ export function upsertDevice({
       SK: `THING#${thingId}#DEVICE#${deviceId}`,
     },
     UpdateExpression:
-      'set friendlyName = :fn, template = :te, thingId = :th, deviceId = :de, updatedAt = :ua',
+      'set friendlyName = :fn, template = :te, retrievable = :rt, thingId = :th, deviceId = :de, updatedAt = :ua',
     ExpressionAttributeValues: {
       ':fn': friendlyName,
       ':te': template,
+      ':rt': retrievable ? true : false,
       ':th': thingId,
       ':de': deviceId,
       ':ua': dayjs().toISOString(),
@@ -252,6 +254,12 @@ export async function getDevicesOfUser(userId: string): Promise<Device[]> {
     })
   })
 
+  // ensure 'retrievable' attribute is present (old records in DB might not have it yet):
+  devices = devices.map((device) => {
+    device.retrievable = device.retrievable ?? false
+    return device
+  })
+
   return devices as Device[]
 }
 
@@ -288,6 +296,12 @@ export async function getDevicesOfThing(
         return resolve(data.Items)
       }
     })
+  })
+
+  // ensure 'retrievable' attribute is present (old records in DB might not have it yet):
+  devices = devices.map((device) => {
+    device.retrievable = device.retrievable ?? false
+    return device
   })
 
   return devices as Device[]
