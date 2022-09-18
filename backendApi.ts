@@ -382,7 +382,7 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
           name: 'VSH Pro',
           features: [
             'control up to 200 virtual devices',
-            'device status queryable from Alexa app',
+            'device status retrievable by Alexa',
             'cancellable at any time',
           ],
           priceTags: [
