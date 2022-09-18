@@ -316,7 +316,7 @@ async function handleRequestConfig({
   }
 
   try {
-    const { isBlocked, allowedDeviceCount } = await getUserRecord(userId)
+    const { isBlocked, allowedDeviceCount, plan } = await getUserRecord(userId)
 
     if (isBlocked) {
       await killDeviceWithMessage({
@@ -341,6 +341,7 @@ async function handleRequestConfig({
       operation: 'overrideConfig',
       userIdToken: makeUserIdToken({ thingId, userId }),
       allowedDeviceCount: allowedDeviceCountForThisThing,
+      plan,
     }
 
     if (isFeatureSupportedByClient('msgRateLimiter', vshVersion)) {
