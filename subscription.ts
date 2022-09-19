@@ -59,5 +59,15 @@ export async function handleInvoicePaymentFailed({
   subscription: subscriptionId,
 }) {
   const { metadata } = await stripe.subscriptions.retrieve(subscriptionId)
+
+  if (!metadata.userId) {
+    //userId only gets set when the checkout.session.completed gets processed.
+    //If a new customer entered a wrong CC, invoice.payment_failed will be
+    //fired before checkout.session.completed. This must not result in a failed
+    //webhook response, otherwise Stripe will retry and might therefore accidentally
+    //downgrade the customer who meanwhile might have succeeded the checkout.
+    return
+  }
+
   await switchToPlan(metadata.userId, PlanName.FREE)
 }
