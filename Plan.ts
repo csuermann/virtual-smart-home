@@ -15,8 +15,8 @@ export class Plan {
         break
       case PlanName.FREE:
       default:
-        this.allowedDeviceCount = 100
-        this.asRetrievable = true
+        this.allowedDeviceCount = 7
+        this.asRetrievable = false
     }
   }
 }
