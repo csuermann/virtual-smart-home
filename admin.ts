@@ -3,6 +3,7 @@ import * as express from 'express'
 import * as logger from 'log-aws-lambda'
 import AWS = require('aws-sdk')
 import { getDevicesOfUser, getUserRecord } from './db'
+import { proactivelyRediscoverAllDevices } from './helper'
 
 logger()
 
@@ -258,6 +259,18 @@ app.get('/thing/:thingName/stats', async function (req, res) {
       results: rows,
       matches: queryResult.statistics.recordsMatched,
     })
+  } catch (err) {
+    console.log(err)
+    res.status(500).send(err.message)
+  }
+})
+
+app.post('/thing/:thingName/rediscover', async function (req, res) {
+  try {
+    const thingDetails = await describeThing(req.params.thingName)
+    const userId = thingDetails.attributes['userId']
+    await proactivelyRediscoverAllDevices(userId)
+    res.send({ result: 'ok' })
   } catch (err) {
     console.log(err)
     res.status(500).send(err.message)
