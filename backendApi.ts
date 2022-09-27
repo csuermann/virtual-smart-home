@@ -171,6 +171,8 @@ app.post('/stripe_webhook', async function (req, res) {
 
   // Handle the event
   try {
+    log.info('stripe_webhook received! %j', event)
+
     switch (event.type) {
       case 'checkout.session.completed': //https://stripe.com/docs/api/checkout/sessions/object
         await handleCheckoutSessionCompleted(event.data.object)
@@ -183,13 +185,13 @@ app.post('/stripe_webhook', async function (req, res) {
         break
       // ... handle other event types
       default:
-        console.log(`Unhandled event type ${event.type}: %j`, event)
+        log.warn(`Unhandled event type ${event.type}: %j`, event)
     }
 
     // Return a 200 response to acknowledge receipt of the event
     res.send()
   } catch (err) {
-    log.error('stripe_webhook failed! %j', err)
+    log.error('processing stripe_webhook failed! %j', err)
     res.status(500).send(`Error: ${err.message}`)
   }
 })
