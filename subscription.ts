@@ -28,7 +28,12 @@ export async function switchToPlan(
   log.info('switched user [%s] to plan [%s]', userId, plan)
 
   //push potentially updated device config to Alexa:
-  await proactivelyRediscoverAllDevices(userId)
+  try {
+    //this might fail e.g. with error "Multiple endpoints cannot have the same endpointId"
+    await proactivelyRediscoverAllDevices(userId)
+  } catch (err) {
+    log.warn('proactivelyRediscoverAllDevices failed: %j', err)
+  }
 
   //send 'restart' service msg to all things of user:
   const thingIds = await getThingsOfUser(userId)
