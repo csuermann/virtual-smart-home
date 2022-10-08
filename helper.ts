@@ -326,7 +326,7 @@ export async function pushAsyncStateReportToAlexa(
   const momento = await getMomentoClient()
 
   const cacheName = `vsh_${isProd() ? 'prod' : 'sandbox'}.state_report_props`
-  const cacheKey = endpointId
+  const cacheKey = `${event.thingId}.${endpointId}`
   const cacheValue = JSON.stringify(alexaResponse.context.properties)
 
   try {

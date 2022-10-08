@@ -157,7 +157,7 @@ export async function handleReportState(event: DirectiveEvent) {
   const momento = await getMomentoClient()
 
   const cacheName = `vsh_${isProd() ? 'prod' : 'sandbox'}.state_report_props`
-  const cacheKey = event.directive.endpoint.endpointId
+  const cacheKey = `${thingId}.${event.directive.endpoint.endpointId}`
 
   let cacheResp
 
