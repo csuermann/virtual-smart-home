@@ -8,6 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@gomomento/sdk": "^0.15.0",
     "@types/semver": "^7.3.12",
     "ask-sdk": "^2.12.1",
     "aws-sdk": "^2.1209.0",
@@ -30,6 +31,7 @@
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.13",
     "@types/jsonwebtoken": "^8.5.9",
+    "@types/log": "^6.3.0",
     "@types/node": "^15.14.9",
     "serverless-alexa-skills": "^0.1.0",
     "serverless-plugin-select": "^2.0.0-rc.1",

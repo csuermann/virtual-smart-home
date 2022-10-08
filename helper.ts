@@ -8,6 +8,7 @@ import { getEndpointsForDevices } from './handlers/discover'
 import AWS = require('aws-sdk')
 import { Device } from './Device'
 import { Plan, PlanName } from './Plan'
+import { getMomentoClient } from './momento'
 
 AWS.config.update({ region: process.env.VSH_IOT_REGION })
 
@@ -320,6 +321,31 @@ export async function pushAsyncStateReportToAlexa(
       },
     }
   )
+
+  //also cache the state report to avoid further unnecessary roundtrips to the device:
+  const momento = await getMomentoClient()
+
+  const cacheName = `vsh_${
+    process.env.IS_PROD ? 'prod' : 'sandbox'
+  }.state_report`
+
+  const cacheKey = endpointId
+
+  //delete props not needed in cache:
+  delete alexaResponse.event.header.messageId
+  delete alexaResponse.event.header.correlationToken
+  delete alexaResponse.event.endpoint.scope
+
+  try {
+    await momento.set(cacheName, cacheKey, JSON.stringify(alexaResponse))
+  } catch (err) {
+    log.warn(
+      'caching key %s in %s failed with error %s',
+      cacheKey,
+      cacheName,
+      err.message
+    )
+  }
 
   return true
 }

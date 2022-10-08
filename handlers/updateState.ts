@@ -1,3 +1,4 @@
+import * as log from 'log'
 import { createErrorResponse } from '../helper'
 import { publish } from '../mqtt'
 import { Shadow, fetchThingShadow } from '../shadow'
@@ -119,6 +120,12 @@ export async function handleDirective(event: DirectiveEvent) {
 }
 
 export async function handleReportState(event: DirectiveEvent) {
+  // EXAMPLE report state event:
+  // {
+  //   ... to be added!!!
+  // }
+  log.info('handleReportState() received event: %j', event)
+
   const { thingId } = event.directive.endpoint.cookie
 
   // https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#deferred
