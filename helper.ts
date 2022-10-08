@@ -325,26 +325,19 @@ export async function pushAsyncStateReportToAlexa(
   //also cache the state report to avoid further unnecessary roundtrips to the device:
   const momento = await getMomentoClient()
 
-  const cacheName = `vsh_${
-    process.env.IS_PROD ? 'prod' : 'sandbox'
-  }.state_report`
-
+  const cacheName = `vsh_${isProd() ? 'prod' : 'sandbox'}.state_report_props`
   const cacheKey = endpointId
-
-  //delete props not needed in cache:
-  delete alexaResponse.event.header.messageId
-  delete alexaResponse.event.header.correlationToken
-  delete alexaResponse.event.endpoint.scope
+  const cacheValue = JSON.stringify(alexaResponse.context.properties)
 
   try {
-    log.info(
+    log.debug(
       'attempting to cache key %s in cache %s with value %s',
       cacheKey,
       cacheName,
-      JSON.stringify(alexaResponse)
+      cacheValue
     )
 
-    await momento.set(cacheName, cacheKey, JSON.stringify(alexaResponse))
+    await momento.set(cacheName, cacheKey, cacheValue)
   } catch (err) {
     log.warn(
       'caching key %s in %s failed with error %s',

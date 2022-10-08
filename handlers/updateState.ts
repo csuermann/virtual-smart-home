@@ -1,5 +1,6 @@
 import * as log from 'log'
-import { createErrorResponse } from '../helper'
+import { createErrorResponse, isProd } from '../helper'
+import { CacheGetStatus, getMomentoClient } from '../momento'
 import { publish } from '../mqtt'
 import { Shadow, fetchThingShadow } from '../shadow'
 import { isAllowedClientVersion, isFeatureSupportedByClient } from '../version'
@@ -152,35 +153,76 @@ export async function handleReportState(event: DirectiveEvent) {
 
   const { thingId } = event.directive.endpoint.cookie
 
-  // https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#deferred
-  let immediateResponse = {
-    event: {
-      header: {
-        namespace: 'Alexa',
-        name: 'DeferredResponse',
-        messageId: event.directive.header.messageId + '-R',
-        correlationToken: event.directive.header.correlationToken,
-        payloadVersion: '3',
-      },
-      payload: {
-        estimatedDeferralInSeconds: 5,
-      },
-    },
+  //check if we can construct a syncronous response from cache:
+  const momento = await getMomentoClient()
+
+  const cacheName = `vsh_${isProd() ? 'prod' : 'sandbox'}.state_report_props`
+  const cacheKey = event.directive.endpoint.endpointId
+
+  let cacheResp
+
+  try {
+    cacheResp = await momento.get(cacheName, cacheKey)
+  } catch (err) {
+    log.warn('retrieving cache failed with error: %s', err.message)
+    cacheResp.status = CacheGetStatus.Unknown
   }
 
-  const directiveStub = { ...event }
+  if (cacheResp.status === CacheGetStatus.Hit) {
+    log.debug('cache hit for %s:%s: %s', cacheName, cacheKey, cacheResp.text())
+    const cachedProps = JSON.parse(cacheResp.text())
 
-  //omit parts of event that are not needed by client:
-  delete directiveStub.directive.header.messageId
-  delete directiveStub.directive.header.payloadVersion
-  delete directiveStub.directive.endpoint.scope
-  delete directiveStub.directive.endpoint.cookie
-  delete directiveStub.profile
+    return {
+      event: {
+        header: {
+          namespace: 'Alexa',
+          name: 'StateReport',
+          messageId: event.directive.header.messageId + '-R',
+          correlationToken: event.directive.header.correlationToken,
+          payloadVersion: '3',
+        },
+        endpoint: {
+          endpointId: event.directive.endpoint.endpointId,
+        },
+        payload: {},
+      },
+      context: {
+        properties: [...cachedProps],
+      },
+    }
+  } else {
+    log.debug('cache miss for %s:%s!', cacheName, cacheKey)
 
-  await publish(
-    `vsh/${thingId}/${event.directive.endpoint.endpointId}/directive`,
-    directiveStub
-  )
+    // https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#deferred
+    let immediateResponse = {
+      event: {
+        header: {
+          namespace: 'Alexa',
+          name: 'DeferredResponse',
+          messageId: event.directive.header.messageId + '-R',
+          correlationToken: event.directive.header.correlationToken,
+          payloadVersion: '3',
+        },
+        payload: {
+          estimatedDeferralInSeconds: 5,
+        },
+      },
+    }
 
-  return immediateResponse
+    const directiveStub = { ...event }
+
+    //omit parts of event that are not needed by client:
+    delete directiveStub.directive.header.messageId
+    delete directiveStub.directive.header.payloadVersion
+    delete directiveStub.directive.endpoint.scope
+    delete directiveStub.directive.endpoint.cookie
+    delete directiveStub.profile
+
+    await publish(
+      `vsh/${thingId}/${event.directive.endpoint.endpointId}/directive`,
+      directiveStub
+    )
+
+    return immediateResponse
+  }
 }

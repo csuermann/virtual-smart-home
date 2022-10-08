@@ -1,4 +1,4 @@
-import { SimpleCacheClient } from '@gomomento/sdk'
+import { SimpleCacheClient, CacheGetStatus } from '@gomomento/sdk'
 
 let client = null
 
@@ -13,3 +13,5 @@ export async function getMomentoClient() {
 
   return client
 }
+
+export { CacheGetStatus }
