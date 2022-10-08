@@ -7,7 +7,7 @@ export async function getMomentoClient() {
     return client
   }
 
-  client = new SimpleCacheClient(process.env.MOMENTO_TOKEN, 900, {
+  client = new SimpleCacheClient(process.env.MOMENTO_TOKEN, 3600, {
     requestTimeoutMs: 1500,
   })
 

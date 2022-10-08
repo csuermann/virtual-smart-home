@@ -337,6 +337,13 @@ export async function pushAsyncStateReportToAlexa(
   delete alexaResponse.event.endpoint.scope
 
   try {
+    log.info(
+      'attempting to cache key %s in cache %s with value %s',
+      cacheKey,
+      cacheName,
+      JSON.stringify(alexaResponse)
+    )
+
     await momento.set(cacheName, cacheKey, JSON.stringify(alexaResponse))
   } catch (err) {
     log.warn(

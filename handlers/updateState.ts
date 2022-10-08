@@ -122,9 +122,33 @@ export async function handleDirective(event: DirectiveEvent) {
 export async function handleReportState(event: DirectiveEvent) {
   // EXAMPLE report state event:
   // {
-  //   ... to be added!!!
+  //   "directive": {
+  //     "header": {
+  //       "namespace": "Alexa",
+  //       "name": "ReportState",
+  //       "payloadVersion": "3",
+  //       "messageId": "20519cc7-6c...",
+  //       "correlationToken": "AAAAAAAAAQAQ14..."
+  //     },
+  //     "endpoint": {
+  //       "scope": {
+  //         "type": "BearerToken",
+  //         "token": "Atza|IwE..."
+  //       },
+  //       "endpointId": "vshd-c5f826...",
+  //       "cookie": {
+  //         "template": "SWITCH",
+  //         "thingId": "vsht-badf0..."
+  //       }
+  //     },
+  //     "payload": {}
+  //   },
+  //   "profile": {
+  //     "user_id": "amzn1.account.AFWAF...",
+  //     "name": "CS",
+  //     "email": "c...@gmail.com"
+  //   }
   // }
-  log.info('handleReportState() received event: %j', event)
 
   const { thingId } = event.directive.endpoint.cookie
 
@@ -147,11 +171,11 @@ export async function handleReportState(event: DirectiveEvent) {
   const directiveStub = { ...event }
 
   //omit parts of event that are not needed by client:
-  delete directiveStub.profile
   delete directiveStub.directive.header.messageId
   delete directiveStub.directive.header.payloadVersion
   delete directiveStub.directive.endpoint.scope
   delete directiveStub.directive.endpoint.cookie
+  delete directiveStub.profile
 
   await publish(
     `vsh/${thingId}/${event.directive.endpoint.endpointId}/directive`,
