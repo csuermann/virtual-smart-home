@@ -70,6 +70,8 @@ export async function readDevicePropsFromCache(
     throw new Error('cache miss')
   }
 
+  log.debug('cache hit for %s:%s!', cacheName, cacheKey)
+
   return JSON.parse(cacheResp.text())
 }
 
