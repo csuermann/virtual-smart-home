@@ -1,11 +1,10 @@
-import * as log from 'log'
-import { createErrorResponse, isProd } from '../helper'
-import { CacheGetStatus, getMomentoClient } from '../momento'
+import { createErrorResponse } from '../helper'
+import { readDevicePropsFromCache } from '../cache'
 import { publish } from '../mqtt'
 import { Shadow, fetchThingShadow } from '../shadow'
-import { isAllowedClientVersion, isFeatureSupportedByClient } from '../version'
+import { isAllowedClientVersion } from '../version'
 
-interface Property {
+export interface Property {
   namespace: string
   name: string
   value: any
@@ -16,24 +15,6 @@ interface Property {
 
 interface DirectiveEvent {
   [key: string]: any
-}
-
-type ResolverFn = (event: DirectiveEvent) => Property[]
-
-function makeProperty(
-  namespace: string,
-  name: string,
-  value: any,
-  instance?: string
-): Property {
-  return {
-    namespace,
-    name,
-    value,
-    instance,
-    timeOfSample: new Date().toISOString(),
-    uncertaintyInMilliseconds: 0,
-  }
 }
 
 export async function handleDirective(event: DirectiveEvent) {
@@ -121,7 +102,7 @@ export async function handleDirective(event: DirectiveEvent) {
 }
 
 export async function handleReportState(event: DirectiveEvent) {
-  // EXAMPLE report state event:
+  // EXAMPLE event (report state):
   // {
   //   "directive": {
   //     "header": {
@@ -153,24 +134,12 @@ export async function handleReportState(event: DirectiveEvent) {
 
   const { thingId } = event.directive.endpoint.cookie
 
-  //check if we can construct a syncronous response from cache:
-  const momento = await getMomentoClient()
-
-  const cacheName = `vsh_${isProd() ? 'prod' : 'sandbox'}.state_report_props`
-  const cacheKey = `${thingId}.${event.directive.endpoint.endpointId}`
-
-  let cacheResp
-
+  //try to construct a syncronous response from cache:
   try {
-    cacheResp = await momento.get(cacheName, cacheKey)
-  } catch (err) {
-    log.warn('retrieving cache failed with error: %s', err.message)
-    cacheResp.status = CacheGetStatus.Unknown
-  }
-
-  if (cacheResp.status === CacheGetStatus.Hit) {
-    log.debug('cache hit for %s:%s: %s', cacheName, cacheKey, cacheResp.text())
-    const cachedProps = JSON.parse(cacheResp.text())
+    const cachedProps = await readDevicePropsFromCache(
+      thingId,
+      event.directive.endpoint.endpointId
+    )
 
     return {
       event: {
@@ -190,8 +159,8 @@ export async function handleReportState(event: DirectiveEvent) {
         properties: [...cachedProps],
       },
     }
-  } else {
-    log.debug('cache miss for %s:%s!', cacheName, cacheKey)
+  } catch (err) {
+    // cache miss!
 
     // https://developer.amazon.com/en-US/docs/alexa/device-apis/alexa-response.html#deferred
     let immediateResponse = {

@@ -8,7 +8,7 @@ import { getEndpointsForDevices } from './handlers/discover'
 import AWS = require('aws-sdk')
 import { Device } from './Device'
 import { Plan, PlanName } from './Plan'
-import { getMomentoClient } from './momento'
+import { writeDevicePropsToCache } from './cache'
 
 AWS.config.update({ region: process.env.VSH_IOT_REGION })
 
@@ -110,7 +110,7 @@ export function createErrorResponse(
 /**
  * https://developer.amazon.com/en-US/docs/alexa/smarthome/state-reporting-for-a-smart-home-skill.html#report-state-with-changereport-events
  */
-export async function pushChangeReportToAlexa(
+export async function pushAsyncChangeReportToAlexa(
   userId: string,
   event: VshClientBackchannelEvent
 ) {
@@ -178,7 +178,7 @@ export async function pushChangeReportToAlexa(
 
   log.debug('CHANGE REPORT: %j', changeReport)
 
-  const response: AxiosResponse = await Axios.post(
+  const eventGatewayResponse: AxiosResponse = await Axios.post(
     getEventGatewayUrl(skillRegion),
     changeReport,
     {
@@ -188,7 +188,13 @@ export async function pushChangeReportToAlexa(
     }
   )
 
-  return response.status == 202
+  //also cache device props:
+  await writeDevicePropsToCache(event.thingId, endpointId, [
+    ...changeReport.context.properties,
+    ...changeReport.event.payload.change.properties,
+  ])
+
+  return eventGatewayResponse.status == 202
 }
 
 /**
@@ -246,7 +252,7 @@ export async function pushAsyncResponseToAlexa(
 
   log.debug('ASYNC DIRECTIVE RESPONSE: %j', alexaResponse)
 
-  const response: AxiosResponse = await Axios.post(
+  const eventGatewayResponse: AxiosResponse = await Axios.post(
     getEventGatewayUrl(skillRegion),
     alexaResponse,
     {
@@ -256,7 +262,14 @@ export async function pushAsyncResponseToAlexa(
     }
   )
 
-  return response.status == 202
+  //also cache device props:
+  await writeDevicePropsToCache(
+    event.thingId,
+    endpointId,
+    alexaResponse.context.properties
+  )
+
+  return eventGatewayResponse.status == 202
 }
 
 export async function pushAsyncStateReportToAlexa(
@@ -323,29 +336,11 @@ export async function pushAsyncStateReportToAlexa(
   )
 
   //also cache the state report to avoid further unnecessary roundtrips to the device:
-  const momento = await getMomentoClient()
-
-  const cacheName = `vsh_${isProd() ? 'prod' : 'sandbox'}.state_report_props`
-  const cacheKey = `${event.thingId}.${endpointId}`
-  const cacheValue = JSON.stringify(alexaResponse.context.properties)
-
-  try {
-    log.debug(
-      'attempting to cache key %s in cache %s with value %s',
-      cacheKey,
-      cacheName,
-      cacheValue
-    )
-
-    await momento.set(cacheName, cacheKey, cacheValue)
-  } catch (err) {
-    log.warn(
-      'caching key %s in %s failed with error %s',
-      cacheKey,
-      cacheName,
-      err.message
-    )
-  }
+  await writeDevicePropsToCache(
+    event.thingId,
+    endpointId,
+    alexaResponse.context.properties
+  )
 
   return true
 }

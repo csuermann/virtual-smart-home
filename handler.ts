@@ -9,7 +9,7 @@ import {
   describeThing,
   proactivelyDiscoverDevices,
   proactivelyUndiscoverDevices,
-  pushChangeReportToAlexa,
+  pushAsyncChangeReportToAlexa,
   pushAsyncResponseToAlexa,
   pushAsyncStateReportToAlexa,
   VshClientBackchannelEvent,
@@ -27,6 +27,7 @@ import {
 import { Device } from './Device'
 import { publish } from './mqtt'
 import { isAllowedClientVersion, isFeatureSupportedByClient } from './version'
+import { deleteDevicePropsFromCache } from './cache'
 
 logger()
 
@@ -191,6 +192,9 @@ async function handleBackchannelBulkDiscover(event) {
 
     devicesToDiscover.push(device)
     await upsertDevice(device)
+
+    //delete cached device props:
+    await deleteDevicePropsFromCache(device.thingId, device.deviceId)
   }
 
   try {
@@ -286,9 +290,9 @@ async function handleChangeReport(event: VshClientBackchannelEvent) {
   }
 
   try {
-    return await pushChangeReportToAlexa(userId, event)
+    return await pushAsyncChangeReportToAlexa(userId, event)
   } catch (e) {
-    log.error('pushChangeReportToAlexa FAILED!! %s', e.message)
+    log.error('pushAsyncChangeReportToAlexa FAILED! %s', e.message)
     return false
   }
 }

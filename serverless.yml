@@ -21,7 +21,7 @@ provider:
     HASH_SECRET: ${env:HASH_SECRET}
     MOMENTO_TOKEN: ${env:MOMENTO_TOKEN}
     LOG_LEVEL: ${env:LOG_LEVEL}
-    VSH_LATEST_CLIENT_VERSION: '3.0.0'
+    VSH_LATEST_CLIENT_VERSION: '3.0.4'
     LOG_INSPECT_DEPTH: 8
 
   iamRoleStatements:
