@@ -66,6 +66,7 @@ functions:
     regions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: handler.backchannel
+    timeout: 30
 
   cleanup:
     regions:

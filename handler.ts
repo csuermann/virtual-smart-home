@@ -234,11 +234,21 @@ export async function handleBackchannelBulkUndiscover({ thingId, devices }) {
     devicesToUndiscover.push(device)
     deviceIDsToUndiscover.push(device.deviceId)
 
-    await deleteDevice({
-      userId,
-      deviceId: device.deviceId,
-      thingId: device.thingId,
-    })
+    try {
+      await deleteDevice({
+        userId,
+        deviceId: device.deviceId,
+        thingId: device.thingId,
+      })
+    } catch (err) {
+      log.error(
+        'deleteDevice for userId %s, thingId %s, deviceId %s FAILED! %j',
+        userId,
+        device.thingId,
+        device.deviceId,
+        err
+      )
+    }
   }
 
   return await proactivelyUndiscoverDevices(userId, deviceIDsToUndiscover)
