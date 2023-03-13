@@ -104,6 +104,10 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 1. In the Alexa Developer Console click on 'Smart Home' in the side menu
 1. Paste the value of the FunctionArn (from step 22) as 'Default Endpoint' as well as for 'Europe / India'
 1. Click Save
+1. To run your backend without limitations, navigate to your DynamoDB https://eu-west-1.console.aws.amazon.com/dynamodbv2/home?region=eu-west-1#item-explorer?table=VSH&maximize=true
+   1. Open and edit the Item with SK 'TOKEN'
+   1. Add a new attribute 'plan' from type 'string' with the value 'pro'
+   1. Save changes
 1. Your own backend should now be set up! Congratulations!
 
 ## Configuring Node-RED
