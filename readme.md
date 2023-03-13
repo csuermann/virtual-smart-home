@@ -93,6 +93,16 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
    `export HASH_SECRET=foobar28429789`
 
    `export VSH_ADMIN_API_KEY=unguessable8823472893472`
+
+1. Create environment variables user by the serverless deploy process
+
+   `export IS_PROD=false`
+
+   `export LOG_LEVEL=debug`
+
+   `export STRIPE_API_KEY=abc`
+
+   `export STRIPE_WEBHOOK_SECRET=xyz`
 1. run `npm install`
 1. install the serverless framework by running `npm install -g serverless`
 1. run `serverless deploy`
