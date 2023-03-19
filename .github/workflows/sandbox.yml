@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - sandbox
+    paths-ignore:
+      - 'readme.md'
 
 jobs:
   deploy:
