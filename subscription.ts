@@ -63,7 +63,8 @@ export async function handleCustomerSubscriptionDeleted({ metadata }) {
 export async function handleInvoicePaymentFailed({
   subscription: subscriptionId,
 }) {
-  const { metadata } = await stripe.subscriptions.retrieve(subscriptionId)
+  const { metadata, customer: customerId } =
+    await stripe.subscriptions.retrieve(subscriptionId)
 
   if (!metadata.userId) {
     //userId only gets set when the checkout.session.completed gets processed.
@@ -74,5 +75,17 @@ export async function handleInvoicePaymentFailed({
     return
   }
 
-  await switchToPlan(metadata.userId, PlanName.FREE)
+  const customer = (await stripe.customers.retrieve(customerId as string, {
+    expand: ['subscriptions'],
+  })) as Stripe.Customer & {
+    subscriptions: Stripe.ApiList<Stripe.Subscription>
+  }
+
+  const hasActiveSubscription = customer.subscriptions.data.some(
+    (sub) => sub.status === 'active'
+  )
+
+  if (!hasActiveSubscription) {
+    await switchToPlan(metadata.userId, PlanName.FREE)
+  }
 }
