@@ -7,6 +7,10 @@
     "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "engines": {
+    "node": ">=18.18.0",
+    "npm": ">=9.8.1"
+  },
   "dependencies": {
     "@gomomento/sdk": "^0.15.0",
     "@types/semver": "^7.3.12",
