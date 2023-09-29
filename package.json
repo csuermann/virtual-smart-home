@@ -35,7 +35,7 @@
     "@types/node": "^15.14.9",
     "serverless-alexa-skills": "^0.1.0",
     "serverless-plugin-select": "^2.0.0-rc.1",
-    "serverless-webpack": "^5.3.4",
+    "serverless-webpack": "^5.13.0",
     "ts-loader": "^5.3.3",
     "typescript": "^5.2.2",
     "webpack": "^5.88.2",
