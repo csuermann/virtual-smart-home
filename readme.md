@@ -121,7 +121,7 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 
 Now you need to configure your Node-RED vsh-connection node to use _your_ backend instead of the official one.
 
-1. Open the `settings.js` file of your Node-RED installation and add the following just before the closeing "}"
+1. Open the `settings.js` file of your Node-RED installation and add the following just before the closing "}"
 
     ```javascript
     vshConnectionShowSettings: true,
@@ -146,7 +146,7 @@ Now you need to configure your Node-RED vsh-connection node to use _your_ backen
 7. Follow the instructions above to configure the vsh-connection to interact with your own backend
 8. Observe the activity on the DevTools network tab
       - the call to 'check_version' should go out to your own backend URL
-      - the request payload to 'https://api.amazon.com/auth/o2/create/codepair' should include the 'client_id' of the security profile you configured earlier
+      - the request payload to '<https://api.amazon.com/auth/o2/create/codepair>' should include the 'client_id' of the security profile you configured earlier
 9. Complete the code pairing process
 10. Activate the 'Debug' option of the vsh-connection node
 11. Deploy your Node-RED flow
