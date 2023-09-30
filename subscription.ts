@@ -57,7 +57,9 @@ export async function handleCheckoutSessionCompleted({
 }
 
 export async function handleCustomerSubscriptionDeleted({ metadata }) {
-  if (!hasActiveSubscription(metadata.userId as string)) {
+  const hasSubscription = await hasActiveSubscription(metadata.userId as string)
+
+  if (!hasSubscription) {
     await switchToPlan(metadata.userId, PlanName.FREE)
   }
 }
@@ -77,7 +79,9 @@ export async function handleInvoicePaymentFailed({
     return
   }
 
-  if (!hasActiveSubscription(customerId as string)) {
+  const hasSubscription = await hasActiveSubscription(customerId as string)
+
+  if (!hasSubscription) {
     await switchToPlan(metadata.userId, PlanName.FREE)
   }
 }
