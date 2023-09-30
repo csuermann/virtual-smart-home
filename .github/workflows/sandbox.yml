@@ -13,20 +13,22 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: ['18']
         #region: [eu-west-1, us-east-1, us-west-2]
         region: [eu-west-1]
     env:
       LOG_LEVEL: debug # debug | info | notice | warning | error
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Checkout branch
+        uses: actions/checkout@v3
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - name: serverless deploy to ${{ matrix.region }}
-        uses: serverless/github-action@master
+      - name: Install dependencies
+        run: npm ci
+      - name: Serverless deploy to ${{ matrix.region }}
+        uses: serverless/github-action@v2
         with:
           args: deploy --region ${{ matrix.region }}
         env:
