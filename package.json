@@ -1,7 +1,7 @@
 {
   "name": "virtual-smart-home-skill",
   "version": "1.0.0",
-  "description": "Alexa example using Typescript",
+  "description": "virtual-smart-home backend for AWS Lambda",
   "main": "handler.js",
   "scripts": {
     "build": "webpack",
