@@ -57,7 +57,9 @@ export async function handleCheckoutSessionCompleted({
 }
 
 export async function handleCustomerSubscriptionDeleted({ metadata }) {
-  await switchToPlan(metadata.userId, PlanName.FREE)
+  if (!hasActiveSubscription(metadata.userId as string)) {
+    await switchToPlan(metadata.userId, PlanName.FREE)
+  }
 }
 
 export async function handleInvoicePaymentFailed({
@@ -75,17 +77,17 @@ export async function handleInvoicePaymentFailed({
     return
   }
 
-  const customer = (await stripe.customers.retrieve(customerId as string, {
+  if (!hasActiveSubscription(customerId as string)) {
+    await switchToPlan(metadata.userId, PlanName.FREE)
+  }
+}
+
+async function hasActiveSubscription(customerId: string) {
+  const { subscriptions } = (await stripe.customers.retrieve(customerId, {
     expand: ['subscriptions'],
   })) as Stripe.Customer & {
     subscriptions: Stripe.ApiList<Stripe.Subscription>
   }
 
-  const hasActiveSubscription = customer.subscriptions.data.some(
-    (sub) => sub.status === 'active'
-  )
-
-  if (!hasActiveSubscription) {
-    await switchToPlan(metadata.userId, PlanName.FREE)
-  }
+  return subscriptions.data.some((sub) => sub.status === 'active')
 }
