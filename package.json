@@ -1,11 +1,15 @@
 {
   "name": "virtual-smart-home-skill",
   "version": "1.0.0",
-  "description": "Alexa example using Typescript",
+  "description": "virtual-smart-home backend for AWS Lambda",
   "main": "handler.js",
   "scripts": {
     "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=18.18.0",
+    "npm": ">=9.8.1"
   },
   "dependencies": {
     "@gomomento/sdk": "^0.15.0",
@@ -35,11 +39,11 @@
     "@types/node": "^15.14.9",
     "serverless-alexa-skills": "^0.1.0",
     "serverless-plugin-select": "^2.0.0-rc.1",
-    "serverless-webpack": "^5.3.4",
+    "serverless-webpack": "^5.13.0",
     "ts-loader": "^5.3.3",
-    "typescript": "^4.0.2",
-    "webpack": "^4.29.0",
-    "webpack-cli": "^3.3.12"
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
   },
   "author": "Cornelius Suermann",
   "license": "MIT",
