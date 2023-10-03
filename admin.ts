@@ -2,8 +2,11 @@ import * as serverless from 'serverless-http'
 import * as express from 'express'
 import * as logger from 'log-aws-lambda'
 import AWS = require('aws-sdk')
-import { getDevicesOfUser, getUserRecord } from './db'
+import { getDevicesOfUser, getThingsOfUser, getUserRecord } from './db'
 import { proactivelyRediscoverAllDevices } from './helper'
+import { publish } from './mqtt'
+import { switchToPlan } from './subscription'
+import { PlanName } from './Plan'
 
 logger()
 
@@ -275,6 +278,26 @@ app.post('/thing/:thingName/rediscover', async function (req, res) {
     console.log(err)
     res.status(500).send(err.message)
   }
+})
+
+app.post('/user/:userId/restartThings', async function (req, res) {
+  try {
+    const thingIds = await getThingsOfUser(req.params.userId)
+    for (const thingId of thingIds) {
+      await publish(`vsh/${thingId}/service`, {
+        operation: 'restart',
+      })
+    }
+    res.send({ result: 'ok', thingIds })
+  } catch (err) {
+    console.log(err)
+    res.status(500).send(err.message)
+  }
+})
+
+app.post('/user/:userId/switchToPlan/:planName', async function (req, res) {
+  await switchToPlan(req.params.userId, req.params.planName as PlanName)
+  res.send({ result: 'ok' })
 })
 
 app.post('/thing/:thingName/blockUser', async function (req, res) {
