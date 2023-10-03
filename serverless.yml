@@ -11,6 +11,7 @@ provider:
   stage: dev
   memorySize: 256
   logRetentionInDays: 3
+  lambdaHashingVersion: 20200924 #added on 2023-10-03 - https://www.serverless.com/framework/docs/guides/upgrading-v3#lambda-hashing-algorithm
 
   environment:
     IS_PROD: ${env:IS_PROD}
