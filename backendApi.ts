@@ -27,7 +27,7 @@ import {
 } from './subscription'
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY, {
-  apiVersion: '2022-08-01',
+  apiVersion: '2023-08-16',
 })
 
 interface AuthenticatedRequest extends express.Request {
