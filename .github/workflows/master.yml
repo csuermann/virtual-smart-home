@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Serverless deploy to ${{ matrix.region }}
-        uses: serverless/github-action@v2
+        uses: serverless/github-action@v3
         with:
           args: deploy --region ${{ matrix.region }}
         env:
