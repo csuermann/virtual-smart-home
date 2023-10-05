@@ -46,29 +46,50 @@ export async function switchToPlan(
 
 export async function handleCheckoutSessionCompleted({
   client_reference_id: userId,
-  customer: customerId,
-  subscription: subscriptionId,
-}) {
-  await stripe.subscriptions.update(subscriptionId, {
+  customer: stripeCustomerId,
+  subscription: stripeSubscriptionId,
+}: Stripe.Checkout.Session) {
+  await stripe.subscriptions.update(stripeSubscriptionId as string, {
     metadata: { userId: userId },
   })
 
-  await switchToPlan(userId, PlanName.PRO, customerId)
+  await switchToPlan(userId, PlanName.PRO, stripeCustomerId as string)
 }
 
-export async function handleCustomerSubscriptionDeleted({ metadata }) {
-  const hasSubscription = await hasActiveSubscription(metadata.userId as string)
+export async function handleCustomerSubscriptionDeleted({
+  metadata,
+  customer: stripeCustomerId,
+}: Stripe.Subscription) {
+  const hasSubscription = await hasActiveSubscription(
+    stripeCustomerId as string
+  )
 
   if (!hasSubscription) {
     await switchToPlan(metadata.userId, PlanName.FREE)
   }
 }
 
+export async function handleInvoicePaymentSucceeded({
+  subscription: stripeSubscriptionId,
+}: Stripe.Invoice) {
+  const { metadata } = await stripe.subscriptions.retrieve(
+    stripeSubscriptionId as string
+  )
+
+  if (!metadata.userId) {
+    // by throwing an error, the webhook response will be 500 and Stripe will retry
+    // this is to mitigate any race conditions
+    throw new Error('metadata.userId is missing')
+  }
+
+  await switchToPlan(metadata.userId, PlanName.PRO)
+}
+
 export async function handleInvoicePaymentFailed({
-  subscription: subscriptionId,
-}) {
-  const { metadata, customer: customerId } =
-    await stripe.subscriptions.retrieve(subscriptionId)
+  subscription: stripeSubscriptionId,
+}: Stripe.Invoice) {
+  const { metadata, customer: stripeCustomerId } =
+    await stripe.subscriptions.retrieve(stripeSubscriptionId as string)
 
   if (!metadata.userId) {
     //userId only gets set when the checkout.session.completed gets processed.
@@ -79,15 +100,17 @@ export async function handleInvoicePaymentFailed({
     return
   }
 
-  const hasSubscription = await hasActiveSubscription(customerId as string)
+  const hasSubscription = await hasActiveSubscription(
+    stripeCustomerId as string
+  )
 
   if (!hasSubscription) {
     await switchToPlan(metadata.userId, PlanName.FREE)
   }
 }
 
-async function hasActiveSubscription(customerId: string) {
-  const { subscriptions } = (await stripe.customers.retrieve(customerId, {
+async function hasActiveSubscription(stripeCustomerId: string) {
+  const { subscriptions } = (await stripe.customers.retrieve(stripeCustomerId, {
     expand: ['subscriptions'],
   })) as Stripe.Customer & {
     subscriptions: Stripe.ApiList<Stripe.Subscription>

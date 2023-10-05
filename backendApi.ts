@@ -24,6 +24,7 @@ import {
   handleCheckoutSessionCompleted,
   handleCustomerSubscriptionDeleted,
   handleInvoicePaymentFailed,
+  handleInvoicePaymentSucceeded,
 } from './subscription'
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY, {
@@ -175,13 +176,20 @@ app.post('/stripe_webhook', async function (req, res) {
 
     switch (event.type) {
       case 'checkout.session.completed': //https://stripe.com/docs/api/checkout/sessions/object
-        await handleCheckoutSessionCompleted(event.data.object)
+        await handleCheckoutSessionCompleted(
+          event.data.object as Stripe.Checkout.Session
+        )
         break
       case 'customer.subscription.deleted': //https://stripe.com/docs/api/subscriptions/object
-        await handleCustomerSubscriptionDeleted(event.data.object)
+        await handleCustomerSubscriptionDeleted(
+          event.data.object as Stripe.Subscription
+        )
+        break
+      case 'invoice.payment_succeeded': //https://stripe.com/docs/api/invoices/object
+        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice)
         break
       case 'invoice.payment_failed': //https://stripe.com/docs/api/invoices/object
-        await handleInvoicePaymentFailed(event.data.object)
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
         break
       // ... handle other event types
       default:
