@@ -204,6 +204,7 @@ app.get('/thing/:thingName/info', async function (req, res) {
     shadow: makeTimestampsReadable(thingShadow),
     account: {
       ...account,
+      userId: thingDetails.attributes['userId'],
       SK: undefined,
       PK: undefined,
       accessToken: undefined,
