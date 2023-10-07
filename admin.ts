@@ -204,6 +204,7 @@ app.get('/thing/:thingName/info', async function (req, res) {
     shadow: makeTimestampsReadable(thingShadow),
     account: {
       ...account,
+      userId: thingDetails.attributes['userId'],
       SK: undefined,
       PK: undefined,
       accessToken: undefined,
@@ -274,6 +275,48 @@ app.post('/thing/:thingName/rediscover', async function (req, res) {
     const userId = thingDetails.attributes['userId']
     await proactivelyRediscoverAllDevices(userId)
     res.send({ result: 'ok' })
+  } catch (err) {
+    console.log(err)
+    res.status(500).send(err.message)
+  }
+})
+
+app.get('/user/:userId/info', async function (req, res) {
+  try {
+    const userRecord = await getUserRecord(req.params.userId)
+    const account = {
+      ...userRecord,
+      userId: req.params.userId,
+      SK: undefined,
+      PK: undefined,
+      accessToken: undefined,
+      refreshToken: undefined,
+      deleteAtUnixTime: new Date(
+        userRecord.deleteAtUnixTime * 1000
+      ).toISOString(),
+    }
+
+    const devices = (await getDevicesOfUser(req.params.userId)).reduce(
+      (acc, device) => {
+        const key = device.thingId
+        if (!acc[key]) {
+          acc[key] = []
+        }
+        acc[key].push({
+          ...device,
+          SK: undefined,
+          PK: undefined,
+          thingId: undefined,
+        })
+        return acc
+      },
+      {}
+    )
+
+    res.send({
+      account,
+      devices,
+    })
   } catch (err) {
     console.log(err)
     res.status(500).send(err.message)
