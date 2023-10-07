@@ -281,6 +281,48 @@ app.post('/thing/:thingName/rediscover', async function (req, res) {
   }
 })
 
+app.get('/user/:userId/info', async function (req, res) {
+  try {
+    const userRecord = await getUserRecord(req.params.userId)
+    const account = {
+      ...userRecord,
+      userId: req.params.userId,
+      SK: undefined,
+      PK: undefined,
+      accessToken: undefined,
+      refreshToken: undefined,
+      deleteAtUnixTime: new Date(
+        userRecord.deleteAtUnixTime * 1000
+      ).toISOString(),
+    }
+
+    const devices = (await getDevicesOfUser(req.params.userId)).reduce(
+      (acc, device) => {
+        const key = device.thingId
+        if (!acc[key]) {
+          acc[key] = []
+        }
+        acc[key].push({
+          ...device,
+          SK: undefined,
+          PK: undefined,
+          thingId: undefined,
+        })
+        return acc
+      },
+      {}
+    )
+
+    res.send({
+      account,
+      devices,
+    })
+  } catch (err) {
+    console.log(err)
+    res.status(500).send(err.message)
+  }
+})
+
 app.post('/user/:userId/restartThings', async function (req, res) {
   try {
     const thingIds = await getThingsOfUser(req.params.userId)
