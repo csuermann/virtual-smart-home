@@ -19,7 +19,7 @@ export interface UserRecord {
   allowedDeviceCount?: number
   plan?: string
   stripeCustomerId?: string
-  deleteAtUnixTime: number
+  deleteAtUnixTime?: number
 }
 
 export type PartialUserRecord = Pick<UserRecord, 'userId'> & Partial<UserRecord>
