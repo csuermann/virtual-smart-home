@@ -12,7 +12,7 @@
     "npm": ">=9.8.1"
   },
   "dependencies": {
-    "@gomomento/sdk": "^0.15.0",
+    "@gomomento/sdk": "^1.41.2",
     "@types/semver": "^7.5.3",
     "ask-sdk": "^2.14.0",
     "aws-sdk": "^2.1468.0",

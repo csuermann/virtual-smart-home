@@ -1,17 +1,26 @@
-import { SimpleCacheClient, CacheGetStatus } from '@gomomento/sdk'
-import log = require('log')
+import {
+  CacheClient,
+  CacheGet,
+  Configurations,
+  CredentialProvider,
+} from '@gomomento/sdk'
 import { Property } from './handlers/updateState'
 import { isProd } from './helper'
+import log = require('log')
 
-let client = null
+let client: CacheClient
 
 async function getMomentoClient() {
   if (client) {
     return client
   }
 
-  client = new SimpleCacheClient(process.env.MOMENTO_TOKEN, 3600, {
-    requestTimeoutMs: 1500,
+  client = await CacheClient.create({
+    configuration: Configurations.Lambda.latest(),
+    credentialProvider: CredentialProvider.fromEnvironmentVariable({
+      environmentVariableName: 'MOMENTO_TOKEN',
+    }),
+    defaultTtlSeconds: 3600,
   })
 
   return client
@@ -50,29 +59,24 @@ export async function readDevicePropsFromCache(
   const cacheName = getCacheName()
   const cacheKey = `${thingId}.${endpointId}`
 
-  let cacheResp
+  const cacheResp = await momento.get(cacheName, cacheKey)
 
-  try {
-    cacheResp = await momento.get(cacheName, cacheKey)
-  } catch (err) {
+  if (cacheResp instanceof CacheGet.Hit) {
+    return JSON.parse(cacheResp.valueString())
+  } else if (cacheResp instanceof CacheGet.Miss) {
+    log.debug('cache miss for %s:%s!', cacheName, cacheKey)
+    throw new Error('cache miss')
+  } else if (cacheResp instanceof CacheGet.Error) {
     log.warn(
       'reading cache %s:%s failed with error: %s',
       cacheName,
       cacheKey,
-      err.message
+      `${cacheResp.errorCode()}: ${cacheResp.toString()}`
     )
-
-    cacheResp.status = CacheGetStatus.Unknown
+    throw new Error('cache error')
+  } else {
+    throw new Error('unexpected cache error')
   }
-
-  if (cacheResp.status !== CacheGetStatus.Hit) {
-    log.debug('cache miss for %s:%s!', cacheName, cacheKey)
-    throw new Error('cache miss')
-  }
-
-  log.debug('cache hit for %s:%s!', cacheName, cacheKey)
-
-  return JSON.parse(cacheResp.text())
 }
 
 export async function deleteDevicePropsFromCache(
