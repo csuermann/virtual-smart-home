@@ -1,5 +1,7 @@
 service: virtual-smart-home
 
+configValidationMode: warn
+
 plugins:
   - serverless-plugin-select
   - serverless-webpack
@@ -11,7 +13,7 @@ provider:
   stage: dev
   memorySize: 256
   logRetentionInDays: 3
-  lambdaHashingVersion: 20200924 #added on 2023-10-03 - https://www.serverless.com/framework/docs/guides/upgrading-v3#lambda-hashing-algorithm
+  lambdaHashingVersion: 20201221
 
   environment:
     IS_PROD: ${env:IS_PROD}
@@ -25,24 +27,26 @@ provider:
     VSH_LATEST_CLIENT_VERSION: '3.0.0'
     LOG_INSPECT_DEPTH: 8
 
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - iot:*
-      Resource:
-        - '*'
-    - Effect: Allow
-      Action:
-        - dynamodb:*
-      Resource:
-        - !Sub arn:aws:dynamodb:${self:provider.environment.VSH_IOT_REGION}:${AWS::AccountId}:table/VSH
-    - Effect: Allow
-      Action:
-        - cloudwatch:PutMetricData
-        - logs:StartQuery
-        - logs:GetQueryResults
-      Resource:
-        - '*'
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - iot:*
+          Resource:
+            - '*'
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource:
+            - !Sub arn:aws:dynamodb:${self:provider.environment.VSH_IOT_REGION}:${AWS::AccountId}:table/VSH
+        - Effect: Allow
+          Action:
+            - cloudwatch:PutMetricData
+            - logs:StartQuery
+            - logs:GetQueryResults
+          Resource:
+            - '*'
 
 custom:
   myStage: ${opt:stage, self:provider.stage} #self:custom.myStage
