@@ -37,7 +37,6 @@
     "@types/jsonwebtoken": "^9.0.3",
     "@types/log": "^6.3.1",
     "@types/node": "^20.8.3",
-    "serverless-alexa-skills": "^0.1.0",
     "serverless-plugin-select": "2.0.0-rc.1",
     "serverless-webpack": "^5.13.0",
     "ts-loader": "^9.5.0",
