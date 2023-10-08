@@ -33,7 +33,7 @@ jobs:
       - name: Serverless deploy to ${{ matrix.region }}
         uses: serverless/github-action@v3
         with:
-          args: deploy --enforce-hash-update --region ${{ matrix.region }}
+          args: deploy --region ${{ matrix.region }}
         env:
           IS_PROD: 'FALSE'
           AWS_DEFAULT_REGION: ${{ matrix.region }}

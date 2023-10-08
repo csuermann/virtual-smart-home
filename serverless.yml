@@ -13,7 +13,6 @@ provider:
   stage: dev
   memorySize: 256
   logRetentionInDays: 3
-  lambdaHashingVersion: 20201221
 
   environment:
     IS_PROD: ${env:IS_PROD}
