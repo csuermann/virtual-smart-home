@@ -32,7 +32,7 @@ jobs:
       - name: Serverless deploy to ${{ matrix.region }}
         uses: serverless/github-action@v3
         with:
-          args: deploy --region ${{ matrix.region }}
+          args: deploy --enforce-hash-update --region ${{ matrix.region }}
         env:
           IS_PROD: 'TRUE'
           AWS_DEFAULT_REGION: ${{ matrix.region }}
@@ -47,3 +47,7 @@ jobs:
           STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           MOMENTO_TOKEN: ${{ secrets.MOMENTO_TOKEN }}
+      - name: Serverless doctor advice
+        uses: serverless/github-action@v3
+        with:
+          args: doctor
