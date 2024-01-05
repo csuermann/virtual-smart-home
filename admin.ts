@@ -281,6 +281,19 @@ app.post('/thing/:thingName/rediscover', async function (req, res) {
   }
 })
 
+app.post('/thing/:thingName/restart', async function (req, res) {
+  try {
+    await publish(`vsh/${req.params.thingName}/service`, {
+      operation: 'restart',
+    })
+
+    res.send({ result: 'ok' })
+  } catch (err) {
+    console.log(err)
+    res.status(500).send(err.message)
+  }
+})
+
 app.post('/thing/:thingName/kill', async function (req, res) {
   try {
     await publish(`vsh/${req.params.thingName}/service`, {
