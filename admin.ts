@@ -281,6 +281,20 @@ app.post('/thing/:thingName/rediscover', async function (req, res) {
   }
 })
 
+app.post('/thing/:thingName/kill', async function (req, res) {
+  try {
+    await publish(`vsh/${req.params.thingName}/service`, {
+      operation: 'kill',
+      reason: req.query.reason ?? 'killed by admin',
+    })
+
+    res.send({ result: 'ok' })
+  } catch (err) {
+    console.log(err)
+    res.status(500).send(err.message)
+  }
+})
+
 app.get('/user/:userId/info', async function (req, res) {
   try {
     const userRecord = await getUserRecord(req.params.userId)

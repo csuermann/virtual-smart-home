@@ -41,6 +41,13 @@ export default async function handleDiscover(event) {
   const devices = await getDevicesOfUser(event.profile.user_id)
   const tokenRecord = await getUserRecord(event.profile.user_id)
   const plan = new Plan(tokenRecord.plan as PlanName)
+  const endpoints = getEndpointsForDevices(devices, plan.asRetrievable)
+
+  // Remove duplicates based on the "endpointId" property
+  const endpointsDeduplicated = endpoints.filter(
+    (obj, index, self) =>
+      index === self.findIndex((o) => o.endpointId === obj.endpointId)
+  )
 
   return {
     event: {
@@ -51,7 +58,7 @@ export default async function handleDiscover(event) {
         messageId: event.directive.header.messageId + '-R',
       },
       payload: {
-        endpoints: getEndpointsForDevices(devices, plan.asRetrievable),
+        endpoints: endpointsDeduplicated,
       },
     },
   }
