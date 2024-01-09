@@ -31,6 +31,10 @@ export async function writeDevicePropsToCache(
   endpointId: string,
   properties: any[]
 ) {
+  if (!isCacheEnabled()) {
+    return
+  }
+
   const momento = await getMomentoClient()
 
   const cacheName = getCacheName()
@@ -54,6 +58,10 @@ export async function readDevicePropsFromCache(
   thingId: string,
   endpointId: string
 ): Promise<Property[]> {
+  if (!isCacheEnabled()) {
+    throw new Error('cache disabled')
+  }
+
   const momento = await getMomentoClient()
 
   const cacheName = getCacheName()
@@ -83,6 +91,10 @@ export async function deleteDevicePropsFromCache(
   thingId: string,
   endpointId: string
 ) {
+  if (!isCacheEnabled()) {
+    return
+  }
+
   const momento = await getMomentoClient()
 
   const cacheName = getCacheName()
@@ -103,4 +115,8 @@ export async function deleteDevicePropsFromCache(
 
 function getCacheName() {
   return `vsh_${isProd() ? 'prod' : 'sandbox'}.state_report_props`
+}
+
+function isCacheEnabled() {
+  return !!process.env.MOMENTO_TOKEN
 }
