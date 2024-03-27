@@ -1229,7 +1229,7 @@ export default function (asRetrievable: boolean) {
     THERMOSTAT: {
       endpointId: '<device.id>',
       manufacturerName: 'virtual smart home',
-      description: 'virtual thermostat',
+      description: 'virtual thermostat with one target setpoint',
       friendlyName: '<device.friendlyName>',
       displayCategories: ['THERMOSTAT'],
       cookie: {},
@@ -1257,12 +1257,73 @@ export default function (asRetrievable: boolean) {
               {
                 name: 'targetSetpoint',
               },
-              // {
-              //   name: 'lowerSetpoint',
-              // },
-              // {
-              //   name: 'upperSetpoint',
-              // },
+              {
+                name: 'thermostatMode',
+              },
+            ],
+            proactivelyReported: true,
+            retrievable: asRetrievable,
+          },
+          configuration: {
+            supportedModes: ['AUTO', 'HEAT', 'COOL', 'ECO', 'OFF'],
+            supportsScheduling: false,
+          },
+        },
+        {
+          type: 'AlexaInterface',
+          interface: 'Alexa.TemperatureSensor',
+          version: '3',
+          properties: {
+            supported: [
+              {
+                name: 'temperature',
+              },
+            ],
+            proactivelyReported: true,
+            retrievable: asRetrievable,
+          },
+        },
+        {
+          type: 'AlexaInterface',
+          interface: 'Alexa',
+          version: '3',
+        },
+      ],
+    },
+    THERMOSTAT_2: {
+      endpointId: '<device.id>',
+      manufacturerName: 'virtual smart home',
+      description: 'virtual thermostat with upper and lower setpoints',
+      friendlyName: '<device.friendlyName>',
+      displayCategories: ['THERMOSTAT'],
+      cookie: {},
+      capabilities: [
+        {
+          type: 'AlexaInterface',
+          interface: 'Alexa.PowerController',
+          version: '3',
+          properties: {
+            supported: [
+              {
+                name: 'powerState',
+              },
+            ],
+            proactivelyReported: true,
+            retrievable: asRetrievable,
+          },
+        },
+        {
+          type: 'AlexaInterface',
+          interface: 'Alexa.ThermostatController',
+          version: '3',
+          properties: {
+            supported: [
+              {
+                name: 'lowerSetpoint',
+              },
+              {
+                name: 'upperSetpoint',
+              },
               {
                 name: 'thermostatMode',
               },
