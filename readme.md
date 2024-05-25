@@ -105,7 +105,7 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
       `export STRIPE_WEBHOOK_SECRET=xyz`
 
 20. run `npm install`
-21. install the serverless framework by running `npm install -g serverless`
+21. install the serverless framework by running `npm install -g serverless@3.38.0`
 22. run `serverless deploy`
 23. Note down the POST endpoint printed as part of the `serverless deploy` output
     - e.g. <https://xxxxxxxxxx.execute-api.eu-west-1.amazonaws.com/dev/provision>
@@ -113,7 +113,7 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 
       `aws lambda get-function --function-name virtual-smart-home-dev-skill`
 25. In the Alexa Developer Console click on 'Smart Home' in the side menu
-26. Paste the value of the FunctionArn (from step 23) as 'Default Endpoint' as well as for 'Europe / India'
+26. Paste the value of the FunctionArn (from step 24) as 'Default Endpoint' as well as for 'Europe / India'
 27. Click Save
 28. Your own backend should now be set up! Congratulations!
 
