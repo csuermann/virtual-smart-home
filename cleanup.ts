@@ -1,5 +1,5 @@
 import AWS = require('aws-sdk')
-import { getDevicesOfThing } from './db'
+import { getDevicesOfThing, getUserRecord, postponeTokenDeletion } from './db'
 import { handleBackchannelBulkUndiscover } from './handler'
 
 AWS.config.update({ region: process.env.VSH_IOT_REGION })
@@ -147,6 +147,16 @@ async function totallyCleanUpThing(thingName) {
 
   const data: any = await describeThing(thingName)
   const { userId } = data.attributes
+
+  //skip cleaning up things belonging to pro plan customers:
+  const account = await getUserRecord(userId)
+  if (account.plan === 'pro') {
+    await postponeTokenDeletion(userId, 60)
+
+    throw new Error(
+      `skipping PRO plan customer ${userId}, thingId ${thingName}`
+    )
+  }
 
   const devices = await getDevicesOfThing(userId, thingName)
   console.log('devices::', devices.length)
