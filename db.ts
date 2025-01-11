@@ -59,6 +59,33 @@ export function upsertTokens(
   })
 }
 
+export function postponeTokenDeletion(
+  userId: string,
+  daysFromNow: number
+): Promise<any> {
+  const params = {
+    TableName: 'VSH',
+    Key: {
+      PK: `USER#${userId}`,
+      SK: 'TOKEN',
+    },
+    UpdateExpression: 'set deleteAtUnixTime = :ttl',
+    ExpressionAttributeValues: {
+      ':ttl': dayjs().add(daysFromNow, 'day').unix(),
+    },
+  }
+
+  return new Promise((resolve, reject) => {
+    docClient.update(params, function (err, data) {
+      if (err) {
+        return reject(err)
+      } else {
+        return resolve(data)
+      }
+    })
+  })
+}
+
 export function updateUserRecord(partialUser: PartialUserRecord): Promise<any> {
   const updateRec = { ...partialUser }
 

@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Serverless deploy to ${{ matrix.region }}
-        uses: serverless/github-action@v3
+        uses: serverless/github-action@v3.2
         with:
           args: deploy --region ${{ matrix.region }}
         env:
@@ -49,6 +49,6 @@ jobs:
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_SANDBOX }}
           MOMENTO_TOKEN: ${{ secrets.MOMENTO_TOKEN_SANDBOX }}
       - name: Serverless doctor advice
-        uses: serverless/github-action@v3
+        uses: serverless/github-action@v3.2
         with:
           args: doctor
