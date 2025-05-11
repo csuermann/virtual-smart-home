@@ -142,6 +142,10 @@ functions:
           path: stripe_webhook
           method: post
           cors: false
+      - http:
+          path: paddle_webhook
+          method: post
+          cors: false
 
   admin:
     regions:
