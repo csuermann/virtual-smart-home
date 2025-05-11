@@ -27,6 +27,7 @@ import {
 import { Plan, PlanName } from './Plan'
 import {
   handlePaddleSubscriptionActivated,
+  handlePaddleSubscriptionCanceled,
   handleStripeCheckoutSessionCompleted,
   handleStripeCustomerSubscriptionDeleted,
   handleStripeInvoicePaymentFailed,
@@ -237,6 +238,9 @@ app.post('/paddle_webhook', async function (req, res) {
       switch (eventData.eventType) {
         case PaddleEventName.SubscriptionActivated:
           await handlePaddleSubscriptionActivated(eventData)
+          break
+        case PaddleEventName.SubscriptionCanceled:
+          await handlePaddleSubscriptionCanceled(eventData)
           break
         default:
           log.warn(

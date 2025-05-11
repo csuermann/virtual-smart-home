@@ -9,7 +9,9 @@ import {
   Environment,
   Paddle,
   SubscriptionActivatedEvent,
+  SubscriptionCanceledEvent,
 } from '@paddle/paddle-node-sdk'
+import { ok } from 'node:assert/strict'
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY, {
   apiVersion: '2023-08-16',
@@ -91,11 +93,27 @@ export async function handlePaddleSubscriptionActivated(
   })
 }
 
+export async function handlePaddleSubscriptionCanceled(
+  event: SubscriptionCanceledEvent
+) {
+  const userId = (event.data.customData as { userId: string }).userId
+
+  ok(userId, 'userId is missing in customData')
+
+  const hasSubscription = await hasActivePaddleSubscription(
+    event.data.customerId
+  )
+
+  if (!hasSubscription) {
+    await switchToPlan(userId, PlanName.FREE)
+  }
+}
+
 export async function handleStripeCustomerSubscriptionDeleted({
   metadata,
   customer: stripeCustomerId,
 }: Stripe.Subscription) {
-  const hasSubscription = await hasActiveSubscription(
+  const hasSubscription = await hasActiveStripeSubscription(
     stripeCustomerId as string
   )
 
@@ -135,7 +153,7 @@ export async function handleStripeInvoicePaymentFailed({
     return
   }
 
-  const hasSubscription = await hasActiveSubscription(
+  const hasSubscription = await hasActiveStripeSubscription(
     stripeCustomerId as string
   )
 
@@ -144,7 +162,7 @@ export async function handleStripeInvoicePaymentFailed({
   }
 }
 
-async function hasActiveSubscription(stripeCustomerId: string) {
+async function hasActiveStripeSubscription(stripeCustomerId: string) {
   const { subscriptions } = (await stripe.customers.retrieve(stripeCustomerId, {
     expand: ['subscriptions'],
   })) as Stripe.Customer & {
@@ -152,4 +170,13 @@ async function hasActiveSubscription(stripeCustomerId: string) {
   }
 
   return subscriptions.data.some((sub) => sub.status === 'active')
+}
+
+async function hasActivePaddleSubscription(paddleCustomerId: string) {
+  const subscriptions = await paddle.subscriptions.list({
+    customerId: [paddleCustomerId],
+    status: ['active'],
+  })
+
+  return subscriptions.hasMore
 }
