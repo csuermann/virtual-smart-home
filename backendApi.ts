@@ -498,7 +498,7 @@ app.get(
       userId: req.userId,
       email: email,
       priceId: req.jwt.priceId,
-      jwt: req.jwt,
+      jwt: req.query.token,
       sandbox: !isProd(),
       productName: req.jwt.productName,
     }
