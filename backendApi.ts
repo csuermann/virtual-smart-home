@@ -22,10 +22,11 @@ import {
 } from './version'
 import { Plan, PlanName } from './Plan'
 import {
-  handleCheckoutSessionCompleted,
-  handleCustomerSubscriptionDeleted,
-  handleInvoicePaymentFailed,
-  handleInvoicePaymentSucceeded,
+  handlePaddleSubscriptionActivated,
+  handleStripeCheckoutSessionCompleted,
+  handleStripeCustomerSubscriptionDeleted,
+  handleStripeInvoicePaymentFailed,
+  handleStripeInvoicePaymentSucceeded,
 } from './subscription'
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY, {
@@ -179,20 +180,24 @@ app.post('/stripe_webhook', async function (req, res) {
 
     switch (event.type) {
       case 'checkout.session.completed': //https://stripe.com/docs/api/checkout/sessions/object
-        await handleCheckoutSessionCompleted(
+        await handleStripeCheckoutSessionCompleted(
           event.data.object as Stripe.Checkout.Session
         )
         break
       case 'customer.subscription.deleted': //https://stripe.com/docs/api/subscriptions/object
-        await handleCustomerSubscriptionDeleted(
+        await handleStripeCustomerSubscriptionDeleted(
           event.data.object as Stripe.Subscription
         )
         break
       case 'invoice.payment_succeeded': //https://stripe.com/docs/api/invoices/object
-        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice)
+        await handleStripeInvoicePaymentSucceeded(
+          event.data.object as Stripe.Invoice
+        )
         break
       case 'invoice.payment_failed': //https://stripe.com/docs/api/invoices/object
-        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
+        await handleStripeInvoicePaymentFailed(
+          event.data.object as Stripe.Invoice
+        )
         break
       // ... handle other event types
       default:
@@ -224,12 +229,9 @@ app.post('/paddle_webhook', async function (req, res) {
         signature
       )
       switch (eventData.eventType) {
-        // case PaddleEventName.ProductUpdated:
-        //   console.log(`Product ${eventData.data.id} was updated`)
-        //   break
-        // case PaddleEventName.SubscriptionUpdated:
-        //   console.log(`Subscription ${eventData.data.id} was updated`)
-        //   break
+        case PaddleEventName.SubscriptionActivated:
+          await handlePaddleSubscriptionActivated(eventData)
+          break
         default:
           log.warn(
             `Unhandled Paddle event type ${eventData.eventType}: %j`,
@@ -447,7 +449,7 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
           priceTags: [
             {
               name: 'vsh-pro-yearly',
-              tag: '12 EUR per year',
+              tag: '14 EUR per year',
               checkoutToken: jwt.sign(
                 {
                   aud: 'checkout',
@@ -463,7 +465,7 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
             },
             {
               name: 'vsh-pro-monthly',
-              tag: '1.49 EUR per month',
+              tag: '1.79 EUR per month',
               checkoutToken: jwt.sign(
                 {
                   aud: 'checkout',

@@ -1,26 +1,31 @@
 import * as log from 'log'
 import Stripe from 'stripe'
+import * as jwt from 'jsonwebtoken'
 import { getThingsOfUser, updateUserRecord } from './db'
 import { proactivelyRediscoverAllDevices } from './helper'
 import { publish } from './mqtt'
 import { PlanName } from './Plan'
+import { Paddle, SubscriptionActivatedEvent } from '@paddle/paddle-node-sdk'
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY, {
   apiVersion: '2023-08-16',
 })
 
+const paddle = new Paddle(process.env.PADDLE_API_KEY)
+
 export async function switchToPlan(
   userId: string,
   plan: PlanName,
-  stripeCustomerId?: string
+  paymentProviderInfo?: { fieldName: string; paymentProviderCustomerId: string }
 ) {
   const userRec = {
     userId,
     plan,
   }
 
-  if (stripeCustomerId) {
-    userRec['stripeCustomerId'] = stripeCustomerId
+  if (paymentProviderInfo) {
+    userRec[paymentProviderInfo.fieldName] =
+      paymentProviderInfo.paymentProviderCustomerId
   }
 
   await updateUserRecord(userRec)
@@ -44,7 +49,7 @@ export async function switchToPlan(
   }
 }
 
-export async function handleCheckoutSessionCompleted({
+export async function handleStripeCheckoutSessionCompleted({
   client_reference_id: userId,
   customer: stripeCustomerId,
   subscription: stripeSubscriptionId,
@@ -53,10 +58,34 @@ export async function handleCheckoutSessionCompleted({
     metadata: { userId: userId },
   })
 
-  await switchToPlan(userId, PlanName.PRO, stripeCustomerId as string)
+  await switchToPlan(userId, PlanName.PRO, {
+    fieldName: 'stripeCustomerId',
+    paymentProviderCustomerId: stripeCustomerId as string,
+  })
 }
 
-export async function handleCustomerSubscriptionDeleted({
+export async function handlePaddleSubscriptionActivated(
+  event: SubscriptionActivatedEvent
+) {
+  const { jwt: token } = event.data.customData as {
+    jwt: string
+  }
+
+  const decodedJwt = jwt.verify(token, process.env.HASH_SECRET, {
+    maxAge: '3h',
+  }) as jwt.JwtPayload
+
+  const userId = decodedJwt.sub
+
+  await paddle.subscriptions.update(event.data.id, { customData: { userId } })
+
+  await switchToPlan(userId, PlanName.PRO, {
+    fieldName: 'paddleCustomerId',
+    paymentProviderCustomerId: event.data.customerId,
+  })
+}
+
+export async function handleStripeCustomerSubscriptionDeleted({
   metadata,
   customer: stripeCustomerId,
 }: Stripe.Subscription) {
@@ -69,7 +98,7 @@ export async function handleCustomerSubscriptionDeleted({
   }
 }
 
-export async function handleInvoicePaymentSucceeded({
+export async function handleStripeInvoicePaymentSucceeded({
   subscription: stripeSubscriptionId,
 }: Stripe.Invoice) {
   const { metadata } = await stripe.subscriptions.retrieve(
@@ -85,7 +114,7 @@ export async function handleInvoicePaymentSucceeded({
   await switchToPlan(metadata.userId, PlanName.PRO)
 }
 
-export async function handleInvoicePaymentFailed({
+export async function handleStripeInvoicePaymentFailed({
   subscription: stripeSubscriptionId,
 }: Stripe.Invoice) {
   const { metadata, customer: stripeCustomerId } =
