@@ -19,6 +19,7 @@ export interface UserRecord {
   allowedDeviceCount?: number
   plan?: string
   stripeCustomerId?: string
+  paddleCustomerId?: string
   deleteAtUnixTime?: number
 }
 

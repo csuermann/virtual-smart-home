@@ -104,6 +104,10 @@ Follow these steps in order to set up the virtual-smart-home backend in your own
 
       `export STRIPE_WEBHOOK_SECRET=xyz`
 
+      `export PADDLE_API_KEY=abc`
+
+      `export PADDLE_WEBHOOK_SECRET=xyz`
+
 20. run `npm install`
 21. install the serverless framework by running `npm install -g serverless@3.38.0`
 22. run `serverless deploy`

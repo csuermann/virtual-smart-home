@@ -7,6 +7,7 @@ import * as log from 'log'
 import * as logger from 'log-aws-lambda'
 import * as jwt from 'jsonwebtoken'
 import Stripe from 'stripe'
+import { Paddle, EventName as PaddleEventName } from '@paddle/paddle-node-sdk'
 
 import { fetchProfile, isProd, proactivelyUndiscoverDevices } from './helper'
 import AWS = require('aws-sdk')
@@ -30,6 +31,8 @@ import {
 const stripe = new Stripe(process.env.STRIPE_API_KEY, {
   apiVersion: '2023-08-16',
 })
+
+const paddle = new Paddle(process.env.PADDLE_API_KEY)
 
 interface AuthenticatedRequest extends express.Request {
   userId: string
@@ -193,7 +196,7 @@ app.post('/stripe_webhook', async function (req, res) {
         break
       // ... handle other event types
       default:
-        log.warn(`Unhandled event type ${event.type}: %j`, event)
+        log.warn(`Unhandled Stripe event type ${event.type}: %j`, event)
     }
 
     // Return a 200 response to acknowledge receipt of the event
@@ -202,6 +205,46 @@ app.post('/stripe_webhook', async function (req, res) {
     log.error('processing stripe_webhook failed! %j', err)
     res.status(500).send(`Error: ${err.message}`)
   }
+})
+
+app.post('/paddle_webhook', async function (req, res) {
+  const signature = (req.headers['paddle-signature'] as string) || ''
+  // req.body should be of type `buffer`, convert to string before passing it to `unmarshal`.
+  // If express returned a JSON, remove any other middleware that might have processed raw request to object
+  const rawRequestBody = (req as any).rawBody
+  // Replace `WEBHOOK_SECRET_KEY` with the secret key in notifications from vendor dashboard
+  const secretKey = process.env.PADDLE_WEBHOOK_SECRET || ''
+
+  try {
+    if (signature && rawRequestBody) {
+      // The `unmarshal` function will validate the integrity of the webhook and return an entity
+      const eventData = await paddle.webhooks.unmarshal(
+        rawRequestBody,
+        secretKey,
+        signature
+      )
+      switch (eventData.eventType) {
+        // case PaddleEventName.ProductUpdated:
+        //   console.log(`Product ${eventData.data.id} was updated`)
+        //   break
+        // case PaddleEventName.SubscriptionUpdated:
+        //   console.log(`Subscription ${eventData.data.id} was updated`)
+        //   break
+        default:
+          log.warn(
+            `Unhandled Paddle event type ${eventData.eventType}: %j`,
+            eventData
+          )
+      }
+    } else {
+      console.log('Signature missing in header')
+    }
+  } catch (e) {
+    // Handle signature mismatch or other runtime errors
+    console.log(e)
+  }
+  // Return a response to acknowledge
+  res.send('Processed Paddle webhook event')
 })
 
 //applying middlewares for all endpoints below these lines!
@@ -409,9 +452,10 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
                 {
                   aud: 'checkout',
                   sub: req.userId,
+                  productName: 'VSH PRO - Yearly',
                   priceId: isProd()
-                    ? 'price_1Li1C4C3eSYquofeqstbOGi9'
-                    : 'price_1LgSpdC3eSYquofeNk3MClG1',
+                    ? 'pri_01jtxvka1st9m2m6bns9cha8hp'
+                    : 'pri_01jtwt97ekjxb7xn6q1a9p8g5g',
                 },
                 process.env.HASH_SECRET,
                 { expiresIn: '30m' }
@@ -424,9 +468,10 @@ app.get('/plan', needsAuth, async function (req: AuthenticatedRequest, res) {
                 {
                   aud: 'checkout',
                   sub: req.userId,
+                  productName: 'VSH PRO - Monthly',
                   priceId: isProd()
-                    ? 'price_1Li1C4C3eSYquofekuqBmkqk'
-                    : 'price_1LgSpdC3eSYquofegmyiZdQv',
+                    ? 'pri_01jtxvmaxj28qyjwyfbz6qrby4'
+                    : 'pri_01jtwt8adq0rh6t605dc4b4avn',
                 },
                 process.env.HASH_SECRET,
                 { expiresIn: '30m' }
@@ -446,30 +491,48 @@ app.get(
   '/checkout',
   needsTokenForAudience('checkout'),
   async function (req: AuthenticatedRequest, res) {
-    const { stripeCustomerId, email } = await getUserRecord(req.userId)
+    // redirect to the checkout page that uses Paddle Billing
+    const { email } = await getUserRecord(req.userId)
 
-    //init Stripe checkout session and redirect to their checkout experience
-    const stripeSession = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      client_reference_id: req.userId,
-      ...(stripeCustomerId && { customer: stripeCustomerId }), //include customer property if stripeCustomerId is truthy
-      ...(!stripeCustomerId && { customer_email: email }), //include customer_email property if stripeCustomerId is falsy
-      line_items: [
-        {
-          price: req.jwt.priceId,
-          quantity: 1,
-        },
-      ],
-      allow_promotion_codes: true,
-      // {CHECKOUT_SESSION_ID} is a string literal; do not change it!
-      // the actual Session ID is returned in the query parameter when your customer
-      // is redirected to the success page.
-      success_url: `https://${req.hostname}/dev/stripe_redirect?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://${req.hostname}/dev/stripe_redirect?cancelled=true`,
-    })
+    const checkoutIntend = {
+      userId: req.userId,
+      email: email,
+      priceId: req.jwt.priceId,
+      jwt: req.jwt,
+      sandbox: !isProd(),
+      productName: req.jwt.productName,
+    }
 
-    // Redirect to the URL returned on the Checkout Session.
-    res.redirect(303, stripeSession.url)
+    res.redirect(
+      303,
+      'https://vsh.csuermann.de/checkout/?checkoutIntend=' +
+        encode(JSON.stringify(checkoutIntend))
+    )
+
+    // before 2025-05-10 we used Stripe
+    // const { stripeCustomerId, email } = await getUserRecord(req.userId)
+    // //init Stripe checkout session and redirect to their checkout experience
+    // const stripeSession = await stripe.checkout.sessions.create({
+    //   mode: 'subscription',
+    //   client_reference_id: req.userId,
+    //   ...(stripeCustomerId && { customer: stripeCustomerId }), //include customer property if stripeCustomerId is truthy
+    //   ...(!stripeCustomerId && { customer_email: email }), //include customer_email property if stripeCustomerId is falsy
+    //   line_items: [
+    //     {
+    //       price: req.jwt.priceId,
+    //       quantity: 1,
+    //     },
+    //   ],
+    //   allow_promotion_codes: true,
+    //   // {CHECKOUT_SESSION_ID} is a string literal; do not change it!
+    //   // the actual Session ID is returned in the query parameter when your customer
+    //   // is redirected to the success page.
+    //   success_url: `https://${req.hostname}/dev/stripe_redirect?session_id={CHECKOUT_SESSION_ID}`,
+    //   cancel_url: `https://${req.hostname}/dev/stripe_redirect?cancelled=true`,
+    // })
+
+    // // Redirect to the URL returned on the Checkout Session.
+    // res.redirect(303, stripeSession.url)
   }
 )
 
@@ -477,16 +540,31 @@ app.get(
   '/subscription',
   needsTokenForAudience('subscription'),
   async function (req: AuthenticatedRequest, res) {
-    const { stripeCustomerId } = await getUserRecord(req.userId)
+    const { stripeCustomerId, paddleCustomerId } = await getUserRecord(
+      req.userId
+    )
 
-    //init Stripe customer portal session and redirect to there
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: stripeCustomerId,
-      return_url: `https://${req.hostname}/dev/stripe_redirect`,
-    })
+    if (paddleCustomerId) {
+      const paddlePortalSession = await paddle.customerPortalSessions.create(
+        paddleCustomerId,
+        []
+      )
 
-    // Redirect to the URL returned on the portal session.
-    res.redirect(303, portalSession.url)
+      return res.redirect(303, paddlePortalSession.urls.general.overview)
+    }
+
+    if (stripeCustomerId) {
+      //init Stripe customer portal session and redirect to there
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: stripeCustomerId,
+        return_url: `https://${req.hostname}/dev/stripe_redirect`,
+      })
+
+      // Redirect to the URL returned on the portal session.
+      return res.redirect(303, portalSession.url)
+    }
+
+    res.status(400).send({ error: 'no payment provider customer found' })
   }
 )
 
