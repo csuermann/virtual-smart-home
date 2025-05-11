@@ -7,7 +7,11 @@ import * as log from 'log'
 import * as logger from 'log-aws-lambda'
 import * as jwt from 'jsonwebtoken'
 import Stripe from 'stripe'
-import { Paddle, EventName as PaddleEventName } from '@paddle/paddle-node-sdk'
+import {
+  Environment,
+  Paddle,
+  EventName as PaddleEventName,
+} from '@paddle/paddle-node-sdk'
 
 import { fetchProfile, isProd, proactivelyUndiscoverDevices } from './helper'
 import AWS = require('aws-sdk')
@@ -33,7 +37,9 @@ const stripe = new Stripe(process.env.STRIPE_API_KEY, {
   apiVersion: '2023-08-16',
 })
 
-const paddle = new Paddle(process.env.PADDLE_API_KEY)
+const paddle = new Paddle(process.env.PADDLE_API_KEY, {
+  environment: isProd() ? Environment.production : Environment.sandbox,
+})
 
 interface AuthenticatedRequest extends express.Request {
   userId: string

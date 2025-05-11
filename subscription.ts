@@ -2,16 +2,22 @@ import * as log from 'log'
 import Stripe from 'stripe'
 import * as jwt from 'jsonwebtoken'
 import { getThingsOfUser, updateUserRecord } from './db'
-import { proactivelyRediscoverAllDevices } from './helper'
+import { isProd, proactivelyRediscoverAllDevices } from './helper'
 import { publish } from './mqtt'
 import { PlanName } from './Plan'
-import { Paddle, SubscriptionActivatedEvent } from '@paddle/paddle-node-sdk'
+import {
+  Environment,
+  Paddle,
+  SubscriptionActivatedEvent,
+} from '@paddle/paddle-node-sdk'
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY, {
   apiVersion: '2023-08-16',
 })
 
-const paddle = new Paddle(process.env.PADDLE_API_KEY)
+const paddle = new Paddle(process.env.PADDLE_API_KEY, {
+  environment: isProd() ? Environment.production : Environment.sandbox,
+})
 
 export async function switchToPlan(
   userId: string,
