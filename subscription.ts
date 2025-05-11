@@ -173,10 +173,12 @@ async function hasActiveStripeSubscription(stripeCustomerId: string) {
 }
 
 async function hasActivePaddleSubscription(paddleCustomerId: string) {
-  const subscriptions = await paddle.subscriptions.list({
+  const subscriptionList = await paddle.subscriptions.list({
     customerId: [paddleCustomerId],
     status: ['active'],
   })
 
-  return subscriptions.hasMore
+  const firstPage = await subscriptionList.next()
+
+  return firstPage.length > 0
 }
