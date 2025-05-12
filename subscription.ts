@@ -10,6 +10,8 @@ import {
   Paddle,
   SubscriptionActivatedEvent,
   SubscriptionCanceledEvent,
+  TransactionCompletedEvent,
+  TransactionPastDueEvent,
 } from '@paddle/paddle-node-sdk'
 import { ok } from 'node:assert/strict'
 
@@ -75,6 +77,8 @@ export async function handleStripeCheckoutSessionCompleted({
 export async function handlePaddleSubscriptionActivated(
   event: SubscriptionActivatedEvent
 ) {
+  log.info('handlePaddleSubscriptionActivated: %j', event)
+
   const { jwt: token } = event.data.customData as {
     jwt: string
   }
@@ -96,6 +100,7 @@ export async function handlePaddleSubscriptionActivated(
 export async function handlePaddleSubscriptionCanceled(
   event: SubscriptionCanceledEvent
 ) {
+  log.info('handlePaddleSubscriptionCanceled: %j', event)
   const userId = (event.data.customData as { userId: string }).userId
 
   ok(userId, 'userId is missing in customData')
@@ -106,6 +111,38 @@ export async function handlePaddleSubscriptionCanceled(
 
   if (!hasSubscription) {
     await switchToPlan(userId, PlanName.FREE)
+  }
+}
+
+export async function handlePaddleTransactionPastDue(
+  event: TransactionPastDueEvent
+) {
+  log.info('handlePaddleTransactionPastDue: %j', event)
+
+  const subscription = await paddle.subscriptions.get(event.data.subscriptionId)
+
+  const userId = (subscription.customData as { userId: string }).userId
+
+  ok(userId, 'userId is missing in customData')
+
+  await switchToPlan(userId, PlanName.FREE)
+}
+
+export async function handlePaddleTransactionCompleted(
+  event: TransactionCompletedEvent
+) {
+  log.info('handlePaddleTransactionCompleted: %j', event)
+
+  const subscription = await paddle.subscriptions.get(event.data.subscriptionId)
+
+  const userId = (subscription.customData as { userId: string }).userId
+
+  // userId might be missing if this is the first transaction of a new customer
+  // and there is a race condition as we haven't set the customData yet.
+  // In this case, the user should get PRO access via handlePaddleSubscriptionActivated()
+  // a few moments later. Since we don't know the userId yet, we can't set the plan here.
+  if (userId) {
+    await switchToPlan(userId, PlanName.PRO)
   }
 }
 
