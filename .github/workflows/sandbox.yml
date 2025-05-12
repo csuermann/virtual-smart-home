@@ -47,6 +47,8 @@ jobs:
           VSH_ADMIN_API_KEY: ${{ secrets.VSH_ADMIN_API_KEY_SANDBOX }}
           STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY_SANDBOX }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_SANDBOX }}
+          PADDLE_API_KEY: ${{ secrets.PADDLE_API_KEY_SANDBOX }}
+          PADDLE_WEBHOOK_SECRET: ${{ secrets.PADDLE_WEBHOOK_SECRET_SANDBOX }}
           MOMENTO_TOKEN: ${{ secrets.MOMENTO_TOKEN_SANDBOX }}
       - name: Serverless doctor advice
         uses: serverless/github-action@v3.2

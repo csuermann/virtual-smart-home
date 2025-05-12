@@ -103,6 +103,8 @@ functions:
         Ref: 'vshClientPolicy2'
       STRIPE_API_KEY: ${env:STRIPE_API_KEY}
       STRIPE_WEBHOOK_SECRET: ${env:STRIPE_WEBHOOK_SECRET}
+      PADDLE_API_KEY: ${env:PADDLE_API_KEY}
+      PADDLE_WEBHOOK_SECRET: ${env:PADDLE_WEBHOOK_SECRET}
     events:
       - http:
           path: provision
@@ -138,6 +140,10 @@ functions:
           cors: false
       - http:
           path: stripe_webhook
+          method: post
+          cors: false
+      - http:
+          path: paddle_webhook
           method: post
           cors: false
 

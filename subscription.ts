@@ -1,26 +1,41 @@
 import * as log from 'log'
 import Stripe from 'stripe'
+import * as jwt from 'jsonwebtoken'
 import { getThingsOfUser, updateUserRecord } from './db'
-import { proactivelyRediscoverAllDevices } from './helper'
+import { isProd, proactivelyRediscoverAllDevices } from './helper'
 import { publish } from './mqtt'
 import { PlanName } from './Plan'
+import {
+  Environment,
+  Paddle,
+  SubscriptionActivatedEvent,
+  SubscriptionCanceledEvent,
+  SubscriptionPastDueEvent,
+  TransactionCompletedEvent,
+} from '@paddle/paddle-node-sdk'
+import { ok } from 'node:assert/strict'
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY, {
   apiVersion: '2023-08-16',
 })
 
+const paddle = new Paddle(process.env.PADDLE_API_KEY, {
+  environment: isProd() ? Environment.production : Environment.sandbox,
+})
+
 export async function switchToPlan(
   userId: string,
   plan: PlanName,
-  stripeCustomerId?: string
+  paymentProviderInfo?: { fieldName: string; paymentProviderCustomerId: string }
 ) {
   const userRec = {
     userId,
     plan,
   }
 
-  if (stripeCustomerId) {
-    userRec['stripeCustomerId'] = stripeCustomerId
+  if (paymentProviderInfo) {
+    userRec[paymentProviderInfo.fieldName] =
+      paymentProviderInfo.paymentProviderCustomerId
   }
 
   await updateUserRecord(userRec)
@@ -44,7 +59,7 @@ export async function switchToPlan(
   }
 }
 
-export async function handleCheckoutSessionCompleted({
+export async function handleStripeCheckoutSessionCompleted({
   client_reference_id: userId,
   customer: stripeCustomerId,
   subscription: stripeSubscriptionId,
@@ -53,14 +68,87 @@ export async function handleCheckoutSessionCompleted({
     metadata: { userId: userId },
   })
 
-  await switchToPlan(userId, PlanName.PRO, stripeCustomerId as string)
+  await switchToPlan(userId, PlanName.PRO, {
+    fieldName: 'stripeCustomerId',
+    paymentProviderCustomerId: stripeCustomerId as string,
+  })
 }
 
-export async function handleCustomerSubscriptionDeleted({
+export async function handlePaddleSubscriptionActivated(
+  event: SubscriptionActivatedEvent
+) {
+  log.info('handlePaddleSubscriptionActivated: %j', event)
+
+  const { jwt: token } = event.data.customData as {
+    jwt: string
+  }
+
+  const decodedJwt = jwt.verify(token, process.env.HASH_SECRET, {
+    maxAge: '3h',
+  }) as jwt.JwtPayload
+
+  const userId = decodedJwt.sub
+
+  await paddle.subscriptions.update(event.data.id, { customData: { userId } })
+
+  await switchToPlan(userId, PlanName.PRO, {
+    fieldName: 'paddleCustomerId',
+    paymentProviderCustomerId: event.data.customerId,
+  })
+}
+
+export async function handlePaddleSubscriptionCanceled(
+  event: SubscriptionCanceledEvent
+) {
+  log.info('handlePaddleSubscriptionCanceled: %j', event)
+  const userId = (event.data.customData as { userId: string }).userId
+
+  ok(userId, 'userId is missing in customData')
+
+  const hasSubscription = await hasActivePaddleSubscription(
+    event.data.customerId
+  )
+
+  if (!hasSubscription) {
+    await switchToPlan(userId, PlanName.FREE)
+  }
+}
+
+export async function handlePaddleSubscriptionPastDue(
+  event: SubscriptionPastDueEvent
+) {
+  log.info('handlePaddleSubscriptionPastDue: %j', event)
+
+  const userId = (event.data.customData as { userId: string }).userId
+
+  ok(userId, 'userId is missing in customData')
+
+  await switchToPlan(userId, PlanName.FREE)
+}
+
+export async function handlePaddleTransactionCompleted(
+  event: TransactionCompletedEvent
+) {
+  log.info('handlePaddleTransactionCompleted: %j', event)
+
+  const subscription = await paddle.subscriptions.get(event.data.subscriptionId)
+
+  const userId = (subscription.customData as { userId: string }).userId
+
+  // userId might be missing if this is the first transaction of a new customer
+  // and there is a race condition as we haven't set the customData yet.
+  // In this case, the user should get PRO access via handlePaddleSubscriptionActivated()
+  // a few moments later. Since we don't know the userId yet, we can't set the plan here.
+  if (userId) {
+    await switchToPlan(userId, PlanName.PRO)
+  }
+}
+
+export async function handleStripeCustomerSubscriptionDeleted({
   metadata,
   customer: stripeCustomerId,
 }: Stripe.Subscription) {
-  const hasSubscription = await hasActiveSubscription(
+  const hasSubscription = await hasActiveStripeSubscription(
     stripeCustomerId as string
   )
 
@@ -69,7 +157,7 @@ export async function handleCustomerSubscriptionDeleted({
   }
 }
 
-export async function handleInvoicePaymentSucceeded({
+export async function handleStripeInvoicePaymentSucceeded({
   subscription: stripeSubscriptionId,
 }: Stripe.Invoice) {
   const { metadata } = await stripe.subscriptions.retrieve(
@@ -85,7 +173,7 @@ export async function handleInvoicePaymentSucceeded({
   await switchToPlan(metadata.userId, PlanName.PRO)
 }
 
-export async function handleInvoicePaymentFailed({
+export async function handleStripeInvoicePaymentFailed({
   subscription: stripeSubscriptionId,
 }: Stripe.Invoice) {
   const { metadata, customer: stripeCustomerId } =
@@ -100,7 +188,7 @@ export async function handleInvoicePaymentFailed({
     return
   }
 
-  const hasSubscription = await hasActiveSubscription(
+  const hasSubscription = await hasActiveStripeSubscription(
     stripeCustomerId as string
   )
 
@@ -109,7 +197,7 @@ export async function handleInvoicePaymentFailed({
   }
 }
 
-async function hasActiveSubscription(stripeCustomerId: string) {
+async function hasActiveStripeSubscription(stripeCustomerId: string) {
   const { subscriptions } = (await stripe.customers.retrieve(stripeCustomerId, {
     expand: ['subscriptions'],
   })) as Stripe.Customer & {
@@ -117,4 +205,15 @@ async function hasActiveSubscription(stripeCustomerId: string) {
   }
 
   return subscriptions.data.some((sub) => sub.status === 'active')
+}
+
+async function hasActivePaddleSubscription(paddleCustomerId: string) {
+  const subscriptionList = await paddle.subscriptions.list({
+    customerId: [paddleCustomerId],
+    status: ['active'],
+  })
+
+  const firstPage = await subscriptionList.next()
+
+  return firstPage.length > 0
 }
