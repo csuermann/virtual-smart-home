@@ -28,8 +28,8 @@ import { Plan, PlanName } from './Plan'
 import {
   handlePaddleSubscriptionActivated,
   handlePaddleSubscriptionCanceled,
+  handlePaddleSubscriptionPastDue,
   handlePaddleTransactionCompleted,
-  handlePaddleTransactionPastDue,
   handleStripeCheckoutSessionCompleted,
   handleStripeCustomerSubscriptionDeleted,
   handleStripeInvoicePaymentFailed,
@@ -244,8 +244,8 @@ app.post('/paddle_webhook', async function (req, res) {
         case PaddleEventName.SubscriptionCanceled:
           await handlePaddleSubscriptionCanceled(eventData)
           break
-        case PaddleEventName.TransactionPastDue:
-          await handlePaddleTransactionPastDue(eventData)
+        case PaddleEventName.SubscriptionPastDue:
+          await handlePaddleSubscriptionPastDue(eventData)
           break
         case PaddleEventName.TransactionCompleted:
           await handlePaddleTransactionCompleted(eventData)

@@ -10,8 +10,8 @@ import {
   Paddle,
   SubscriptionActivatedEvent,
   SubscriptionCanceledEvent,
+  SubscriptionPastDueEvent,
   TransactionCompletedEvent,
-  TransactionPastDueEvent,
 } from '@paddle/paddle-node-sdk'
 import { ok } from 'node:assert/strict'
 
@@ -114,14 +114,12 @@ export async function handlePaddleSubscriptionCanceled(
   }
 }
 
-export async function handlePaddleTransactionPastDue(
-  event: TransactionPastDueEvent
+export async function handlePaddleSubscriptionPastDue(
+  event: SubscriptionPastDueEvent
 ) {
-  log.info('handlePaddleTransactionPastDue: %j', event)
+  log.info('handlePaddleSubscriptionPastDue: %j', event)
 
-  const subscription = await paddle.subscriptions.get(event.data.subscriptionId)
-
-  const userId = (subscription.customData as { userId: string }).userId
+  const userId = (event.data.customData as { userId: string }).userId
 
   ok(userId, 'userId is missing in customData')
 
