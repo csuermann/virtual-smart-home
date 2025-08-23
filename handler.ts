@@ -78,6 +78,45 @@ export const skill = async function (event, context) {
     const accessToken = extractAccessTokenFromEvent(event)
     const tokenPrefix = accessToken?.substring(0, 12) + '...'
     
+    // Determine the error type and appropriate response
+    let errorType = 'EXPIRED_AUTHORIZATION_CREDENTIAL'
+    let errorMessage = 'invalid token'
+    let shouldDisableSkill = true
+    
+    // Handle ProfileFetchError specifically
+    if (e.name === 'ProfileFetchError') {
+      if (e.isRetryable && !e.isAuthError) {
+        // Network/server errors should not disable the skill
+        errorType = 'INTERNAL_ERROR'
+        errorMessage = 'temporary service unavailable'
+        shouldDisableSkill = false
+        
+        log.warn('NETWORK/SERVER ERROR detected - NOT disabling skill', {
+          directive: event.directive?.header?.name,
+          tokenPrefix,
+          errorCategory: e.errorCategory,
+          status: e.status,
+          isRetryable: e.isRetryable,
+          isAuthError: e.isAuthError,
+          responseData: e.responseData,
+          requestId: context?.awsRequestId
+        })
+      } else if (e.isAuthError) {
+        // Actual auth errors should disable the skill
+        shouldDisableSkill = true
+        
+        log.error('AUTHENTICATION ERROR detected - skill may be disabled', {
+          directive: event.directive?.header?.name,
+          tokenPrefix,
+          errorCategory: e.errorCategory,
+          status: e.status,
+          isAuthError: e.isAuthError,
+          responseData: e.responseData,
+          requestId: context?.awsRequestId
+        })
+      }
+    }
+    
     log.error('Skill authentication failed', {
       directive: event.directive?.header?.name,
       tokenPrefix,
@@ -86,6 +125,12 @@ export const skill = async function (event, context) {
       errorStack: e.stack,
       requestId: context?.awsRequestId,
       userId: event.profile?.user_id || 'unknown',
+      errorType,
+      shouldDisableSkill,
+      // Enhanced classification for ProfileFetchError
+      errorCategory: e.errorCategory || 'unknown',
+      isRetryable: e.isRetryable || false,
+      isAuthError: e.isAuthError || false,
       // Check if this is a token refresh error
       isTokenRefreshError: e.name === 'UserTokenRefreshError' || e.name === 'TokenRefreshError',
       originalTokenError: e.originalError?.message,
@@ -102,10 +147,26 @@ export const skill = async function (event, context) {
         httpStatus: e.status,
         amazonResponse: e.responseData
       })
-    } else if (e.message?.includes('401') || e.message?.includes('403')) {
+    } else if (e.name === 'ProfileFetchError' && e.errorCategory === 'NETWORK_ERROR') {
+      log.warn('NETWORK ERROR on profile fetch - should NOT cause skill disable', {
+        tokenPrefix,
+        errorCategory: e.errorCategory,
+        errorCode: e.originalError?.code,
+        likelyCase: 'Temporary network/DNS/timeout issue'
+      })
+    } else if (e.name === 'ProfileFetchError' && e.errorCategory === 'SERVER_ERROR') {
+      log.warn('AMAZON API SERVER ERROR - should NOT cause skill disable', {
+        tokenPrefix,
+        status: e.status,
+        errorCategory: e.errorCategory,
+        likelyCase: 'Amazon API temporary downtime/overload'
+      })
+    } else if (e.message?.includes('401') || e.message?.includes('403') || 
+               (e.name === 'ProfileFetchError' && e.isAuthError)) {
       log.error('HTTP AUTH ERROR detected', {
         tokenPrefix,
         httpError: e.message,
+        errorCategory: e.errorCategory || 'unknown',
         likelyCase: 'User revoked permissions or client credentials changed'
       })
     } else if (e.message?.includes('invalid_grant')) {
@@ -117,15 +178,16 @@ export const skill = async function (event, context) {
 
     const response = createErrorResponse(
       event,
-      'EXPIRED_AUTHORIZATION_CREDENTIAL',
-      'invalid token'
+      errorType,
+      errorMessage
     )
     
     log.notice(
-      'REQUEST: %j \n EXCEPTION: %o \n RESPONSE: %j',
+      'REQUEST: %j \n EXCEPTION: %o \n RESPONSE: %j \n SKILL_DISABLE_RISK: %s',
       event,
       e,
-      response
+      response,
+      shouldDisableSkill ? 'HIGH' : 'LOW'
     )
     return response
   }
