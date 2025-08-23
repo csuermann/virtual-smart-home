@@ -11,7 +11,7 @@ provider:
   runtime: nodejs20.x
   region: eu-west-1 #eu-west-1, us-east-1, us-west-2
   stage: dev
-  memorySize: 256
+  memorySize: 260
   logRetentionInDays: 3
 
   environment:
@@ -60,7 +60,7 @@ functions:
       - us-west-2
     handler: handler.skill
     timeout: 10
-    #memorySize: 200
+    memorySize: 265
     maximumRetryAttempts: 0
     events:
       - alexaSmartHome:
@@ -71,12 +71,14 @@ functions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: handler.backchannel
     timeout: 30
+    memorySize: 265
 
   cleanup:
     regions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: cleanup.cleanup
     timeout: 300
+    memorySize: 200
     maximumRetryAttempts: 0
     environment:
       VSH_IOT_POLICY:
@@ -89,6 +91,7 @@ functions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: metrics.metrics
     timeout: 15
+    memorySize: 150
     maximumRetryAttempts: 0
     events:
       - schedule: cron(0/15 * * * ? *)
@@ -98,6 +101,7 @@ functions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: backendApi.server
     maximumRetryAttempts: 0
+    memorySize: 220
     environment:
       VSH_IOT_POLICY:
         Ref: 'vshClientPolicy2'
@@ -153,6 +157,7 @@ functions:
     handler: admin.admin
     maximumRetryAttempts: 0
     timeout: 25
+    memorySize: 260
     environment:
       VSH_ADMIN_API_KEY: ${env:VSH_ADMIN_API_KEY}
     events:
