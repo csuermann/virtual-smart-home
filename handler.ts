@@ -74,11 +74,53 @@ export const skill = async function (event, context) {
     const accessToken = extractAccessTokenFromEvent(event)
     event.profile = await fetchProfile(accessToken)
   } catch (e) {
+    // Enhanced error logging for token-related failures
+    const accessToken = extractAccessTokenFromEvent(event)
+    const tokenPrefix = accessToken?.substring(0, 12) + '...'
+    
+    log.error('Skill authentication failed', {
+      directive: event.directive?.header?.name,
+      tokenPrefix,
+      errorName: e.name,
+      errorMessage: e.message,
+      errorStack: e.stack,
+      requestId: context?.awsRequestId,
+      userId: event.profile?.user_id || 'unknown',
+      // Check if this is a token refresh error
+      isTokenRefreshError: e.name === 'UserTokenRefreshError' || e.name === 'TokenRefreshError',
+      originalTokenError: e.originalError?.message,
+      tokenStatus: e.status,
+      responseData: e.responseData
+    })
+
+    // Log specific patterns that indicate different failure types
+    if (e.name === 'UserTokenRefreshError' || e.name === 'TokenRefreshError') {
+      log.error('TOKEN REFRESH FAILURE detected - potential skill auto-disable cause', {
+        userId: e.userId || 'unknown',
+        refreshTokenPrefix: e.refreshTokenPrefix,
+        tokenExpiry: e.tokenExpiry,
+        httpStatus: e.status,
+        amazonResponse: e.responseData
+      })
+    } else if (e.message?.includes('401') || e.message?.includes('403')) {
+      log.error('HTTP AUTH ERROR detected', {
+        tokenPrefix,
+        httpError: e.message,
+        likelyCase: 'User revoked permissions or client credentials changed'
+      })
+    } else if (e.message?.includes('invalid_grant')) {
+      log.error('INVALID_GRANT ERROR detected', {
+        tokenPrefix,
+        likelyCase: 'Refresh token expired, user permissions revoked, or client config changed'
+      })
+    }
+
     const response = createErrorResponse(
       event,
       'EXPIRED_AUTHORIZATION_CREDENTIAL',
       'invalid token'
     )
+    
     log.notice(
       'REQUEST: %j \n EXCEPTION: %o \n RESPONSE: %j',
       event,
