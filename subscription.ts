@@ -1,7 +1,7 @@
 import * as log from 'log'
 import Stripe from 'stripe'
 import * as jwt from 'jsonwebtoken'
-import { getThingsOfUser, updateUserRecord } from './db'
+import { getThingsOfUser, getUserRecord, updateUserRecord } from './db'
 import { isProd, proactivelyRediscoverAllDevices } from './helper'
 import { publish } from './mqtt'
 import { PlanName } from './Plan'
@@ -188,11 +188,17 @@ export async function handleStripeInvoicePaymentFailed({
     return
   }
 
-  const hasSubscription = await hasActiveStripeSubscription(
+  const userRecord = await getUserRecord(metadata.userId, false)
+
+  const hasStripeSubscription = await hasActiveStripeSubscription(
     stripeCustomerId as string
   )
 
-  if (!hasSubscription) {
+  const hasPaddleSubscription =
+    userRecord.paddleCustomerId &&
+    (await hasActivePaddleSubscription(userRecord.paddleCustomerId))
+
+  if (!hasStripeSubscription && !hasPaddleSubscription) {
     await switchToPlan(metadata.userId, PlanName.FREE)
   }
 }
