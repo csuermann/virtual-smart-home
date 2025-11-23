@@ -8,7 +8,7 @@ plugins:
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs22.x
   region: eu-west-1 #eu-west-1, us-east-1, us-west-2
   stage: dev
   memorySize: 256
