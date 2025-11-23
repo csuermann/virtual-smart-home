@@ -65,16 +65,97 @@ export function extractAccessTokenFromEvent(event): string {
 }
 
 export async function fetchProfile(accessToken: string) {
-  const response: AxiosResponse = await Axios.get(
-    'https://api.amazon.com/user/profile',
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  )
+  const tokenPrefix = accessToken?.substring(0, 12) + '...'
+  
+  try {
+    log.debug('Fetching user profile from Amazon', {
+      tokenPrefix,
+      endpoint: 'https://api.amazon.com/user/profile'
+    })
 
-  return response.data
+    const response: AxiosResponse = await Axios.get(
+      'https://api.amazon.com/user/profile',
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    )
+
+    log.debug('Profile fetch successful', {
+      tokenPrefix,
+      userId: response.data?.user_id?.substring(0, 8) + '...',
+      email: response.data?.email ? 'present' : 'absent'
+    })
+
+    return response.data
+  } catch (error) {
+    const axiosError = error as any
+    const status = axiosError.response?.status
+    const statusText = axiosError.response?.statusText
+    const responseData = axiosError.response?.data
+    
+    // Categorize the error type
+    let errorCategory = 'UNKNOWN'
+    let isRetryable = false
+    let isAuthError = false
+    
+    if (status) {
+      if (status === 401) {
+        errorCategory = 'INVALID_TOKEN'
+        isAuthError = true
+      } else if (status === 403) {
+        errorCategory = 'FORBIDDEN_TOKEN'  
+        isAuthError = true
+      } else if (status >= 500 && status <= 599) {
+        errorCategory = 'SERVER_ERROR'
+        isRetryable = true
+      } else if (status === 429) {
+        errorCategory = 'RATE_LIMITED'
+        isRetryable = true
+      } else if (status >= 400 && status <= 499) {
+        errorCategory = 'CLIENT_ERROR'
+        isAuthError = true
+      }
+    } else {
+      // Network-level errors (timeouts, DNS, connection refused)
+      if (axiosError.code === 'ECONNREFUSED' || axiosError.code === 'ENOTFOUND' || 
+          axiosError.code === 'ETIMEDOUT' || axiosError.code === 'ECONNRESET') {
+        errorCategory = 'NETWORK_ERROR'
+        isRetryable = true
+      } else {
+        errorCategory = 'CONNECTION_ERROR'
+        isRetryable = true
+      }
+    }
+
+    log.error('Profile fetch failed', {
+      tokenPrefix,
+      status,
+      statusText,
+      errorCategory,
+      isRetryable,
+      isAuthError,
+      errorCode: axiosError.code,
+      errorMessage: axiosError.message,
+      responseData,
+      url: axiosError.config?.url,
+      timeout: axiosError.config?.timeout
+    })
+
+    // Create enhanced error with classification
+    const enhancedError = new Error(`Profile fetch failed: ${status ? `${status} ${statusText}` : axiosError.message}`)
+    enhancedError.name = 'ProfileFetchError'
+    ;(enhancedError as any).originalError = error
+    ;(enhancedError as any).tokenPrefix = tokenPrefix
+    ;(enhancedError as any).status = status
+    ;(enhancedError as any).errorCategory = errorCategory
+    ;(enhancedError as any).isRetryable = isRetryable
+    ;(enhancedError as any).isAuthError = isAuthError
+    ;(enhancedError as any).responseData = responseData
+    
+    throw enhancedError
+  }
 }
 
 export function createErrorResponse(

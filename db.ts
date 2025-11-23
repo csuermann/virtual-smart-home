@@ -1,5 +1,6 @@
 import * as AWS from 'aws-sdk'
 import dayjs = require('dayjs')
+import * as log from 'log'
 import {
   fetchFreshAccessToken,
   PartialUserRecord,
@@ -168,18 +169,61 @@ export async function getUserRecord(
     const tokenExpiry = dayjs(data.accessTokenExpiry).subtract(15, 'second')
 
     if (tokenExpiry.isBefore(now)) {
-      const newTokens = await fetchFreshAccessToken(data.refreshToken)
+      log.info('Token expired, attempting refresh', {
+        userId: userId.substring(0, 8) + '...',
+        tokenExpiry: tokenExpiry.toISOString(),
+        currentTime: now.toISOString(),
+        refreshTokenPrefix: data.refreshToken?.substring(0, 12) + '...'
+      })
 
-      await upsertTokens(
-        {
-          userId,
-          accessToken: newTokens.access_token,
-          refreshToken: newTokens.refresh_token,
-        },
-        newTokens.expires_in
-      )
+      try {
+        const newTokens = await fetchFreshAccessToken(data.refreshToken)
 
-      data.accessToken = newTokens.access_token
+        await upsertTokens(
+          {
+            userId,
+            accessToken: newTokens.access_token,
+            refreshToken: newTokens.refresh_token,
+          },
+          newTokens.expires_in
+        )
+
+        data.accessToken = newTokens.access_token
+        
+        log.info('Token refresh and database update successful', {
+          userId: userId.substring(0, 8) + '...',
+          hasNewAccessToken: !!newTokens.access_token,
+          hasNewRefreshToken: !!newTokens.refresh_token,
+          newExpiresIn: newTokens.expires_in
+        })
+      } catch (error) {
+        log.error('Token refresh failed in getUserRecord', {
+          userId: userId.substring(0, 8) + '...',
+          errorName: error.name,
+          errorMessage: error.message,
+          tokenExpiry: tokenExpiry.toISOString(),
+          refreshTokenPrefix: data.refreshToken?.substring(0, 12) + '...',
+          originalError: error.originalError?.message,
+          status: error.status,
+          responseData: error.responseData
+        })
+        
+        // Re-throw with additional context for upstream handlers
+        const contextualError = new Error(`Token refresh failed for user ${userId.substring(0, 8)}...: ${error.message}`)
+        contextualError.name = 'UserTokenRefreshError'
+        ;(contextualError as any).userId = userId
+        ;(contextualError as any).originalError = error
+        ;(contextualError as any).tokenExpiry = tokenExpiry.toISOString()
+        
+        throw contextualError
+      }
+    } else {
+      log.debug('Token still valid, no refresh needed', {
+        userId: userId.substring(0, 8) + '...',
+        tokenExpiry: tokenExpiry.toISOString(),
+        currentTime: now.toISOString(),
+        timeUntilExpiry: tokenExpiry.diff(now, 'seconds') + ' seconds'
+      })
     }
   }
 
