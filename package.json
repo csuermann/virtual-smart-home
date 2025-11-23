@@ -8,8 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {
-    "node": ">=18.18.0",
-    "npm": ">=9.8.1"
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
   },
   "dependencies": {
     "@gomomento/sdk": "^1.41.2",
