@@ -78,7 +78,7 @@ functions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: cleanup.cleanup
     timeout: 300
-    memorySize: 200
+    memorySize: 350
     maximumRetryAttempts: 0
     environment:
       VSH_IOT_POLICY:
@@ -91,7 +91,7 @@ functions:
       - ${self:provider.environment.VSH_IOT_REGION}
     handler: metrics.metrics
     timeout: 15
-    memorySize: 150
+    memorySize: 200
     maximumRetryAttempts: 0
     events:
       - schedule: cron(0/15 * * * ? *)
