@@ -15,6 +15,15 @@ export const docClient = new AWS.DynamoDB.DocumentClient({
   apiVersion: '2012-08-10',
 })
 
+// The VSH table has TTL enabled on 'deleteAtUnixTime' (see cloudFormation-eu-west-1.yml).
+// Only TOKEN records carry that attribute, which is why an expired TOKEN record leaves
+// the user's THING#/DEVICE# records behind.
+const TOKEN_TTL_DAYS = 60
+
+// Renew the TTL once it has decayed below this, so that a read only triggers a write
+// every ~15 days per user instead of on every single request.
+const TOKEN_TTL_RENEW_BELOW_DAYS = 45
+
 export function upsertTokens(
   { userId, accessToken, refreshToken, email, skillRegion }: UserRecord,
   expiryInSec
@@ -26,7 +35,7 @@ export function upsertTokens(
     ':e': dayjs().add(expiryInSec, 'second').toISOString(),
     ':a': accessToken,
     ':r': refreshToken,
-    ':ttl': dayjs().add(60, 'day').unix(),
+    ':ttl': dayjs().add(TOKEN_TTL_DAYS, 'day').unix(),
   }
 
   if (email) {
@@ -63,7 +72,9 @@ export function upsertTokens(
 export function postponeTokenDeletion(
   userId: string,
   daysFromNow: number
-): Promise<any> {
+): Promise<number> {
+  const deleteAtUnixTime = dayjs().add(daysFromNow, 'day').unix()
+
   const params = {
     TableName: 'VSH',
     Key: {
@@ -71,17 +82,21 @@ export function postponeTokenDeletion(
       SK: 'TOKEN',
     },
     UpdateExpression: 'set deleteAtUnixTime = :ttl',
+    // never resurrect an already expired record: an update without this condition
+    // would create a TOKEN record holding nothing but a TTL, which getUserRecord()
+    // would then happily return as a token-less user.
+    ConditionExpression: 'attribute_exists(PK)',
     ExpressionAttributeValues: {
-      ':ttl': dayjs().add(daysFromNow, 'day').unix(),
+      ':ttl': deleteAtUnixTime,
     },
   }
 
   return new Promise((resolve, reject) => {
-    docClient.update(params, function (err, data) {
+    docClient.update(params, function (err) {
       if (err) {
         return reject(err)
       } else {
-        return resolve(data)
+        return resolve(deleteAtUnixTime)
       }
     })
   })
@@ -93,6 +108,10 @@ export function updateUserRecord(partialUser: PartialUserRecord): Promise<any> {
   delete updateRec.userId
 
   updateRec.updatedAt = dayjs().toISOString()
+
+  // touching the record (e.g. switching plan) counts as account activity, so extend
+  // the TTL too - buying a subscription used to leave the old expiry untouched.
+  updateRec.deleteAtUnixTime = dayjs().add(TOKEN_TTL_DAYS, 'day').unix()
 
   const UpdateExpression =
     'set ' +
@@ -163,6 +182,24 @@ export async function getUserRecord(
       }
     })
   })
+
+  // Keep the record alive for as long as the account is in use. This must happen
+  // *before* the refresh attempt below, which throws on failure: previously the TTL
+  // was only ever renewed by upsertTokens(), so a user whose token refresh kept
+  // failing - or who only ever hit paths passing refreshAccessToken=false - had their
+  // TOKEN record silently deleted by DynamoDB 60 days later, taking their plan and
+  // payment provider IDs with it and leaving the THING# records orphaned.
+  if (
+    !data.deleteAtUnixTime ||
+    data.deleteAtUnixTime < dayjs().add(TOKEN_TTL_RENEW_BELOW_DAYS, 'day').unix()
+  ) {
+    try {
+      data.deleteAtUnixTime = await postponeTokenDeletion(userId, TOKEN_TTL_DAYS)
+    } catch (e) {
+      // never fail the caller over a TTL renewal
+      log.warn('failed to renew TTL of TOKEN record for user %s: %s', userId, e.message)
+    }
+  }
 
   if (refreshAccessToken) {
     const now = dayjs()
