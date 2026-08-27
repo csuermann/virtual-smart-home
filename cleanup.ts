@@ -148,8 +148,11 @@ async function totallyCleanUpThing(thingName) {
   const data: any = await describeThing(thingName)
   const { userId } = data.attributes
 
-  //skip cleaning up things belonging to pro plan customers:
-  const account = await getUserRecord(userId)
+  //skip cleaning up things belonging to pro plan customers.
+  //do NOT refresh the access token here: we only need the plan, and a failing token
+  //refresh used to throw before the PRO check ran, so the safeguard dropped out
+  //exactly for the accounts that needed it most.
+  const account = await getUserRecord(userId, false)
   if (account.plan === 'pro') {
     await postponeTokenDeletion(userId, 60)
 
