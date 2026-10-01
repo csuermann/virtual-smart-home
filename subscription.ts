@@ -123,7 +123,15 @@ export async function handlePaddleSubscriptionPastDue(
 
   ok(userId, 'userId is missing in customData')
 
-  await switchToPlan(userId, PlanName.FREE)
+  const userRecord = await getUserRecord(userId, false)
+
+  const hasStripeSubscription =
+    userRecord.stripeCustomerId &&
+    (await hasActiveStripeSubscription(userRecord.stripeCustomerId))
+
+  if (!hasStripeSubscription) {
+    await switchToPlan(userId, PlanName.FREE)
+  }
 }
 
 export async function handlePaddleTransactionCompleted(
@@ -148,11 +156,17 @@ export async function handleStripeCustomerSubscriptionDeleted({
   metadata,
   customer: stripeCustomerId,
 }: Stripe.Subscription) {
-  const hasSubscription = await hasActiveStripeSubscription(
+  const userRecord = await getUserRecord(metadata.userId, false)
+
+  const hasStripeSubscription = await hasActiveStripeSubscription(
     stripeCustomerId as string
   )
 
-  if (!hasSubscription) {
+  const hasPaddleSubscription =
+    userRecord.paddleCustomerId &&
+    (await hasActivePaddleSubscription(userRecord.paddleCustomerId))
+
+  if (!hasStripeSubscription && !hasPaddleSubscription) {
     await switchToPlan(metadata.userId, PlanName.FREE)
   }
 }
