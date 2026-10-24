@@ -10,7 +10,7 @@ on:
 jobs:
   deploy:
     name: deploy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         node-version: ['24.22.1']
@@ -19,15 +19,15 @@ jobs:
     env:
       LOG_LEVEL: debug # debug | info | notice | warning | error
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v5
         with:
           # must be able to read lockfileVersion 9.0 in pnpm-lock.yaml. pnpm 8 silently
           # ignores it ("Ignoring not compatible lockfile") and re-resolves every semver
           # range to latest, which is how an ESM-only archiver@8 broke the deploy.
           version: 9
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
